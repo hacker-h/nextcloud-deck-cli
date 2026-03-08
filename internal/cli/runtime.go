@@ -13,7 +13,7 @@ import (
 	"github.com/hacker-h/nextcloud-deck-api/internal/deck"
 )
 
-const timeout = 30 * time.Second
+const timeout = 90 * time.Second
 
 type runtime struct {
 	client *deck.Client
