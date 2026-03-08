@@ -28,9 +28,16 @@ func TestCLIIntegrationDeckFlow(t *testing.T) {
 	board := runJSON[deck.Board](t, "board", "create", "--title", boardTitle, "--color", "ff6600")
 	boardID := board.ID
 	defer func() { _ = runMaybe(t, "board", "delete", "--board", fmt.Sprint(boardID)) }()
+	if _, err := runMaybeJSON[[]string](t, "board", "import-systems"); err != nil {
+		t.Logf("import-systems unavailable on this server: %v", err)
+	}
+	if _, err := runMaybeJSON[map[string]any](t, "board", "import-schema", "--name", "DeckJson"); err != nil {
+		t.Logf("import-schema unavailable on this server: %v", err)
+	}
 
 	boards := runJSON[[]deck.Board](t, "board", "list", "--details", "--json")
 	assertBoardPresent(t, boards, boardID)
+	_ = runJSON[map[string]any](t, "capabilities")
 
 	board = runJSON[deck.Board](t, "board", "update", "--board", fmt.Sprint(boardID), "--title", boardTitle+"-updated", "--color", "00aa88")
 	if board.Title != boardTitle+"-updated" {
@@ -47,6 +54,9 @@ func TestCLIIntegrationDeckFlow(t *testing.T) {
 
 	stack1 := runJSON[deck.Stack](t, "list", "create", "--board", fmt.Sprint(boardID), "--title", listA, "--order", "10")
 	stack2 := runJSON[deck.Stack](t, "list", "create", "--board", fmt.Sprint(boardID), "--title", listB, "--order", "20")
+	session := runJSON[deck.Session](t, "session", "create", "--board", fmt.Sprint(boardID))
+	runOK(t, "session", "sync", "--board", fmt.Sprint(boardID), "--token", session.Token)
+	runOK(t, "session", "close", "--board", fmt.Sprint(boardID), "--token", session.Token)
 	stack1 = runJSON[deck.Stack](t, "list", "rename", "--board", fmt.Sprint(boardID), "--list", fmt.Sprint(stack1.ID), "--title", listA+"-renamed")
 	stack2 = runJSON[deck.Stack](t, "list", "reorder", "--board", fmt.Sprint(boardID), "--list", fmt.Sprint(stack2.ID), "--order", "5")
 	stacks := runJSON[[]deck.Stack](t, "list", "list", "--board", fmt.Sprint(boardID))
@@ -76,6 +86,13 @@ func TestCLIIntegrationDeckFlow(t *testing.T) {
 	_ = runJSON[deck.Card](t, "card", "get", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack1.ID), "--card", fmt.Sprint(cardID))
 	runOK(t, "card", "reorder", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack1.ID), "--card", fmt.Sprint(cardID), "--order", "3")
 	runOK(t, "card", "move", "--board", fmt.Sprint(boardID), "--from-stack", fmt.Sprint(stack1.ID), "--to-stack", fmt.Sprint(stack2.ID), "--card", fmt.Sprint(cardID), "--order", "1")
+	runOK(t, "card", "clone", "--card", fmt.Sprint(cardID), "--to-stack", fmt.Sprint(stack2.ID))
+	clonedCandidates := runJSON[[]deck.Card](t, "card", "list", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack2.ID))
+	clonedCardID := latestCardID(clonedCandidates)
+	if clonedCardID == 0 {
+		t.Fatal("expected cloned card in target stack")
+	}
+	_ = runMaybe(t, "card", "delete", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack2.ID), "--card", fmt.Sprint(clonedCardID))
 	stack1Cards := runJSON[[]deck.Card](t, "card", "list", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack1.ID))
 	stack2Cards := runJSON[[]deck.Card](t, "card", "list", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack2.ID))
 	if containsCard(stack1Cards, cardID) || !containsCard(stack2Cards, cardID) {
@@ -90,6 +107,8 @@ func TestCLIIntegrationDeckFlow(t *testing.T) {
 	if card.Archived {
 		t.Fatalf("card still archived: %#v", card)
 	}
+	card = runJSON[deck.Card](t, "card", "done", "--card", fmt.Sprint(cardID))
+	card = runJSON[deck.Card](t, "card", "undone", "--card", fmt.Sprint(cardID))
 
 	todos := runJSON[[]markdownTodo](t, "todo", "add", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack2.ID), "--card", fmt.Sprint(cardID), "--text", "first")
 	if len(todos) != 1 {
@@ -124,6 +143,13 @@ func TestCLIIntegrationDeckFlow(t *testing.T) {
 		t.Fatalf("expected assignment participant, got %#v", assignment)
 	}
 	runOK(t, "card", "unassign-user", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack2.ID), "--card", fmt.Sprint(cardID), "--user", userID)
+	exportPath := filepath.Join(t.TempDir(), "board-export.json")
+	runOK(t, "board", "export", "--board", fmt.Sprint(boardID), "--out", exportPath)
+	importedBoard := runJSON[deck.Board](t, "board", "import", "--file", exportPath)
+	if importedBoard.ID == 0 {
+		t.Fatal("expected imported board id")
+	}
+	_ = runMaybe(t, "board", "delete", "--board", fmt.Sprint(importedBoard.ID))
 	runOK(t, "label", "delete", "--board", fmt.Sprint(boardID), "--label", fmt.Sprint(label.ID))
 
 	comment := runJSON[deck.Comment](t, "comment", "create", "--card", fmt.Sprint(cardID), "--message", "first comment")
@@ -171,6 +197,19 @@ func TestCLIIntegrationDeckFlow(t *testing.T) {
 	} else if err != nil {
 		t.Logf("share create blocked on this server: %v", err)
 	}
+	searchResults := runJSON[[]deck.Card](t, "search", "cards", "--term", cardTitle+"-renamed", "--limit", "10")
+	if len(searchResults) == 0 {
+		t.Fatal("expected search results")
+	}
+	_ = runJSON[map[string]any](t, "user", "search", "--term", userID)
+	_ = runJSON[map[string]any](t, "user", "get", "--user", userID)
+	_ = runJSON[[]deck.Activity](t, "activity", "card", "--card", fmt.Sprint(cardID))
+	_ = runJSON[[]deck.Card](t, "overview", "upcoming")
+	clonedBoard := runJSON[deck.Board](t, "board", "clone", "--board", fmt.Sprint(boardID), "--with-cards", "true", "--with-labels", "true", "--with-due-date", "true")
+	if clonedBoard.ID == 0 {
+		t.Fatal("expected cloned board id")
+	}
+	_ = runMaybe(t, "board", "delete", "--board", fmt.Sprint(clonedBoard.ID))
 
 	runOK(t, "board", "delete", "--board", fmt.Sprint(boardID))
 	if err := runMaybe(t, "board", "restore", "--board", fmt.Sprint(boardID)); err == nil {
@@ -246,4 +285,14 @@ func containsCard(cards []deck.Card, id int64) bool {
 		}
 	}
 	return false
+}
+
+func latestCardID(cards []deck.Card) int64 {
+	var latest deck.Card
+	for _, card := range cards {
+		if card.CreatedAt >= latest.CreatedAt {
+			latest = card
+		}
+	}
+	return latest.ID
 }

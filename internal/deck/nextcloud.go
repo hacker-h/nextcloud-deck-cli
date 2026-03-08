@@ -1,0 +1,44 @@
+package deck
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"net/url"
+	"path"
+	"strings"
+)
+
+func (c *Client) GetCapabilities(ctx context.Context) (map[string]any, error) {
+	var data map[string]any
+	err := c.do(ctx, http.MethodGet, c.nextcloudOCSURL("/cloud/capabilities?format=json"), nil, &data, true, nil)
+	return data, err
+}
+
+func (c *Client) SearchSharees(ctx context.Context, term string) (map[string]any, error) {
+	var data map[string]any
+	endpoint := fmt.Sprintf("/apps/files_sharing/api/v1/sharees?format=json&lookup=false&perPage=20&itemType=0%%2C1%%2C7&search=%s", url.QueryEscape(term))
+	err := c.do(ctx, http.MethodGet, c.nextcloudOCSURL(endpoint), nil, &data, true, nil)
+	return data, err
+}
+
+func (c *Client) GetUser(ctx context.Context, userID string) (map[string]any, error) {
+	var data map[string]any
+	err := c.do(ctx, http.MethodGet, c.nextcloudOCSURL(fmt.Sprintf("/cloud/users/%s?format=json", url.PathEscape(userID))), nil, &data, true, nil)
+	return data, err
+}
+
+func (c *Client) GetCardActivity(ctx context.Context, cardID int64) ([]Activity, error) {
+	var data []Activity
+	endpoint := fmt.Sprintf("/apps/activity/api/v2/activity/filter?format=json&object_type=deck_card&limit=50&since=-1&sort=asc&object_id=%d", cardID)
+	err := c.do(ctx, http.MethodGet, c.nextcloudOCSURL(endpoint), nil, &data, true, nil)
+	return data, err
+}
+
+func (c *Client) nextcloudOCSURL(endpoint string) string {
+	u, _ := url.Parse(c.baseURL)
+	endpointURL, _ := url.Parse(endpoint)
+	u.Path = path.Join(u.Path, "/ocs/v2.php", strings.TrimPrefix(endpointURL.Path, "/"))
+	u.RawQuery = endpointURL.RawQuery
+	return u.String()
+}

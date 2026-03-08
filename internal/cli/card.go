@@ -8,7 +8,7 @@ import (
 
 func runCard(rt *runtime, args []string) error {
 	if len(args) == 0 {
-		return printLine(rt.stdout, "deck card list|get|create|delete|move|reorder|archive|unarchive|rename|describe|due|assign-user|unassign-user|assign-label|remove-label")
+		return printLine(rt.stdout, "deck card list|get|create|clone|delete|move|reorder|archive|unarchive|done|undone|rename|describe|due|assign-user|unassign-user|assign-label|remove-label")
 	}
 	switch args[0] {
 	case "list":
@@ -68,6 +68,21 @@ func runCard(rt *runtime, args []string) error {
 			return err
 		}
 		return printJSON(rt.stdout, card)
+	case "clone":
+		fs := newFlagSet("card clone", rt.stderr)
+		cardID := fs.Int64("card", 0, "card id")
+		targetStackID := fs.Int64("to-stack", 0, "target stack id")
+		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*cardID != 0 && *targetStackID != 0, "card clone requires --card --to-stack"); err != nil {
+			return err
+		}
+		card, err := rt.client.CloneCard(rt.ctx, *cardID, *targetStackID)
+		if err != nil {
+			return err
+		}
+		return printJSON(rt.stdout, card)
 	case "delete":
 		fs := newFlagSet("card delete", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -123,6 +138,28 @@ func runCard(rt *runtime, args []string) error {
 			card, err = rt.client.ArchiveCard(rt.ctx, *boardID, *stackID, *cardID)
 		} else {
 			card, err = rt.client.UnarchiveCard(rt.ctx, *boardID, *stackID, *cardID)
+		}
+		if err != nil {
+			return err
+		}
+		return printJSON(rt.stdout, card)
+	case "done", "undone":
+		fs := newFlagSet("card done", rt.stderr)
+		cardID := fs.Int64("card", 0, "card id")
+		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*cardID != 0, fmt.Sprintf("card %s requires --card", args[0])); err != nil {
+			return err
+		}
+		var (
+			card deck.Card
+			err  error
+		)
+		if args[0] == "done" {
+			card, err = rt.client.MarkCardDone(rt.ctx, *cardID)
+		} else {
+			card, err = rt.client.MarkCardUndone(rt.ctx, *cardID)
 		}
 		if err != nil {
 			return err

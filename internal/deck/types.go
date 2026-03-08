@@ -103,6 +103,39 @@ type Comment struct {
 	Mentions         []Mention `json:"mentions,omitempty"`
 }
 
+type Session struct {
+	Token string `json:"token"`
+}
+
+type CapabilityEnvelope struct {
+	Capabilities map[string]any `json:"capabilities,omitempty"`
+}
+
+type ShareeSearchResult struct {
+	Exact   map[string]any `json:"exact,omitempty"`
+	Users   []any          `json:"users,omitempty"`
+	Groups  []any          `json:"groups,omitempty"`
+	Remotes []any          `json:"remotes,omitempty"`
+	Circles []any          `json:"circles,omitempty"`
+}
+
+type Activity struct {
+	ActivityID int64  `json:"activity_id,omitempty"`
+	Datetime   string `json:"datetime,omitempty"`
+	Subject    string `json:"subject,omitempty"`
+	Message    string `json:"message,omitempty"`
+	ObjectID   int64  `json:"object_id,omitempty"`
+	ObjectType string `json:"object_type,omitempty"`
+	Type       string `json:"type,omitempty"`
+	Link       string `json:"link,omitempty"`
+}
+
+type ImportRequest struct {
+	System string         `json:"system"`
+	Config map[string]any `json:"config"`
+	Data   map[string]any `json:"data"`
+}
+
 type Mention struct {
 	MentionID          string `json:"mentionId"`
 	MentionType        string `json:"mentionType"`

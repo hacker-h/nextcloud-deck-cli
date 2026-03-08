@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"os"
 	"path"
@@ -240,7 +242,14 @@ func (c *Client) doMultipart(ctx context.Context, method, endpoint string, field
 			return fmt.Errorf("open file: %w", err)
 		}
 		defer file.Close()
-		part, err := writer.CreateFormFile(fileField, filepath.Base(filePath))
+		contentType := mime.TypeByExtension(filepath.Ext(filePath))
+		if contentType == "" {
+			contentType = "application/octet-stream"
+		}
+		header := make(textproto.MIMEHeader)
+		header.Set("Content-Disposition", fmt.Sprintf(`form-data; name=%q; filename=%q`, fileField, filepath.Base(filePath)))
+		header.Set("Content-Type", contentType)
+		part, err := writer.CreatePart(header)
 		if err != nil {
 			return fmt.Errorf("create multipart file: %w", err)
 		}
