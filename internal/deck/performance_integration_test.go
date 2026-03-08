@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"sync"
 	"testing"
@@ -96,6 +97,64 @@ func TestPerformanceLargeBoard(t *testing.T) {
 	t.Logf("search cards on large board: %s results=%d", time.Since(measureSearchStart), len(results))
 }
 
+func TestPerformanceBoardBackupImport(t *testing.T) {
+	if os.Getenv("NEXTCLOUD_BASE_URL") == "" || os.Getenv("NEXTCLOUD_USERNAME") == "" || (os.Getenv("NEXTCLOUD_PASSWORD") == "" && os.Getenv("NEXTCLOUD_APP_PASSWORD") == "") {
+		t.Skip("integration env not set")
+	}
+
+	cfg, err := config.LoadFromEnv()
+	if err != nil {
+		t.Fatalf("LoadFromEnv() error = %v", err)
+	}
+
+	client := NewClient(cfg)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
+	defer cancel()
+
+	counts := []int{10, 100}
+	if os.Getenv("NEXTCLOUD_PERF_DEEP") == "1" {
+		counts = append(counts, 200)
+	}
+	for _, cardCount := range counts {
+		cardCount := cardCount
+		t.Run(fmt.Sprintf("cards_%d", cardCount), func(t *testing.T) {
+			prefix := fmt.Sprintf("backup-%d-%d", cardCount, time.Now().UnixNano())
+			board := mustCreateBoardFixture(t, ctx, client, prefix, cardCount)
+			defer func() { _ = client.DeleteBoard(context.Background(), board.ID) }()
+
+			exportPath := filepath.Join(t.TempDir(), fmt.Sprintf("board-%d.json", cardCount))
+			exportStart := time.Now()
+			if err := client.ExportBoard(ctx, board.ID, exportPath); err != nil {
+				t.Fatalf("ExportBoard(%d) error = %v", cardCount, err)
+			}
+			exportDuration := time.Since(exportStart)
+			info, err := os.Stat(exportPath)
+			if err != nil {
+				t.Fatalf("Stat(export %d) error = %v", cardCount, err)
+			}
+
+			importCtx, importCancel := context.WithTimeout(ctx, importTimeout(cardCount))
+			defer importCancel()
+			importStart := time.Now()
+			importedBoard, err := client.ImportBoardFromFile(importCtx, exportPath)
+			importDuration := time.Since(importStart)
+			stackCount := 2
+			t.Logf("export board cards=%d stacks=%d: duration=%s size_bytes=%d size_per_card=%.1f", cardCount, stackCount, exportDuration, info.Size(), float64(info.Size())/float64(cardCount))
+			if err != nil {
+				t.Logf("import board cards=%d stacks=%d: duration=%s result=error error=%v", cardCount, stackCount, importDuration, err)
+				return
+			}
+			defer func() { _ = client.DeleteBoard(context.Background(), importedBoard.ID) }()
+
+			importedStackCount, importedCardCount, err := countImportedBoardCards(ctx, client, importedBoard.ID)
+			if err != nil {
+				t.Fatalf("countImportedBoardCards(%d) error = %v", cardCount, err)
+			}
+			t.Logf("import board cards=%d stacks=%d: duration=%s imported_board_id=%d imported_stacks=%d imported_cards=%d", cardCount, stackCount, importDuration, importedBoard.ID, importedStackCount, importedCardCount)
+		})
+	}
+}
+
 func createCardsSequentially(t *testing.T, ctx context.Context, client *Client, boardID, stackID int64, prefix string, count int) ([]int64, time.Duration) {
 	t.Helper()
 	ids := make([]int64, 0, count)
@@ -160,4 +219,105 @@ func moveCardsSequentially(t *testing.T, ctx context.Context, client *Client, bo
 		}
 	}
 	return time.Since(start)
+}
+
+func mustCreateBoardFixture(t *testing.T, ctx context.Context, client *Client, prefix string, cardCount int) Board {
+	t.Helper()
+	board, err := client.CreateBoard(ctx, BoardCreateRequest{Title: prefix + "-board", Color: "663399"})
+	if err != nil {
+		t.Fatalf("CreateBoard(fixture) error = %v", err)
+	}
+
+	stackA, err := client.CreateStack(ctx, board.ID, CreateStackRequest{Title: prefix + "-todo", Order: 10})
+	if err != nil {
+		t.Fatalf("CreateStack(todo) error = %v", err)
+	}
+	stackB, err := client.CreateStack(ctx, board.ID, CreateStackRequest{Title: prefix + "-doing", Order: 20})
+	if err != nil {
+		t.Fatalf("CreateStack(doing) error = %v", err)
+	}
+
+	half := cardCount / 2
+	_, _ = createCardsInParallelWithDescription(t, ctx, client, board.ID, stackA.ID, prefix+"-a", half, 8)
+	_, _ = createCardsInParallelWithDescription(t, ctx, client, board.ID, stackB.ID, prefix+"-b", cardCount-half, 8)
+
+	return board
+}
+
+func createCardsInParallelWithDescription(t *testing.T, ctx context.Context, client *Client, boardID, stackID int64, prefix string, count, workers int) ([]int64, time.Duration) {
+	t.Helper()
+	type result struct {
+		id  int64
+		err error
+	}
+	jobs := make(chan int)
+	results := make(chan result, count)
+	var wg sync.WaitGroup
+	for w := 0; w < workers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := range jobs {
+				description := fmt.Sprintf("benchmark fixture\n- [ ] task %03d\n- [x] done %03d", i, i)
+				card, err := client.CreateCard(ctx, boardID, stackID, CreateCardRequest{Title: fmt.Sprintf("%s-%03d", prefix, i), Type: "plain", Order: 999, Description: &description})
+				if err != nil {
+					results <- result{err: err}
+					continue
+				}
+				results <- result{id: card.ID}
+			}
+		}()
+	}
+	start := time.Now()
+	for i := 0; i < count; i++ {
+		jobs <- i
+	}
+	close(jobs)
+	wg.Wait()
+	close(results)
+	ids := make([]int64, 0, count)
+	for result := range results {
+		if result.err != nil {
+			t.Fatalf("CreateCard(parallel fixture) error = %v", result.err)
+		}
+		ids = append(ids, result.id)
+	}
+	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	return ids, time.Since(start)
+}
+
+func countBoardEntities(board Board) (int, int) {
+	stacks := len(board.Stacks)
+	cards := 0
+	for _, stack := range board.Stacks {
+		cards += len(stack.Cards)
+	}
+	return stacks, cards
+}
+
+func countImportedBoardCards(ctx context.Context, client *Client, boardID int64) (int, int, error) {
+	stacks, err := client.GetStacks(ctx, boardID)
+	if err != nil {
+		return 0, 0, err
+	}
+	count := 0
+	for _, stack := range stacks {
+		fullStack, err := client.GetStack(ctx, boardID, stack.ID)
+		if err != nil {
+			return 0, 0, err
+		}
+		count += len(fullStack.Cards)
+	}
+	return len(stacks), count, nil
+}
+
+func importTimeout(cardCount int) time.Duration {
+	switch {
+	case cardCount >= 200:
+		return 3 * time.Minute
+	case cardCount >= 100:
+		return 2 * time.Minute
+	default:
+		return 1 * time.Minute
+	}
 }

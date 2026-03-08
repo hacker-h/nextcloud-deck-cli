@@ -366,6 +366,7 @@ set -a
 source ./secrets.env
 set +a
 go test ./internal/deck -run TestPerformanceLargeBoard -count=1 -v
+go test ./internal/deck -run TestPerformanceBoardBackupImport -count=1 -v
 ```
 
 The performance test currently measures:
@@ -376,8 +377,11 @@ The performance test currently measures:
 - fetching board details on a large board
 - moving 50 cards between lists
 - searching cards on a large board
+- exporting and importing board backups at 10-card and 100-card sizes
 
 The test logs wall-clock durations so you can compare server behavior over time.
+
+Latest measured results are captured in `BENCHMARKS.md`.
 
 ## Not Implemented Yet
 
