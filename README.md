@@ -4,7 +4,7 @@ Go CLI for Nextcloud Deck with a typed client, command-line workflows, and real 
 
 ## What It Does
 
-- Manages boards, lists, cards, labels, comments, attachments, shares, sessions, config, search, upcoming cards, capabilities, users, and card activity
+- Manages boards, lists, cards, labels, comments, attachments, shares, config, search, upcoming cards, capabilities, users, and card activity
 - Supports markdown-based card todos through checklist parsing in card descriptions
 - Works as both a reusable Go client and a CLI
 - Includes end-to-end integration coverage against a real Deck server
@@ -116,12 +116,16 @@ deck board import-systems
 deck board import-schema --name DeckJson
 ```
 
+These are currently not supported on the verified test server and should be treated as not implemented for now.
+
 Delete or restore a board:
 
 ```bash
 deck board delete --board 1
 deck board restore --board 1
 ```
+
+`deck board restore` is currently not supported on the verified test server and should be treated as not implemented for now.
 
 ### List Commands
 
@@ -300,7 +304,7 @@ deck config set --key cardIdBadge --value true
 deck config set --key calendar --value false
 ```
 
-### Search, Overview, Session, User, Capability, and Activity Commands
+### Search, Overview, User, Capability, and Activity Commands
 
 Search cards:
 
@@ -312,14 +316,6 @@ Upcoming cards:
 
 ```bash
 deck overview upcoming
-```
-
-Session lifecycle:
-
-```bash
-deck session create --board 1
-deck session sync --board 1 --token TOKEN
-deck session close --board 1 --token TOKEN
 ```
 
 User search and lookup:
@@ -361,9 +357,32 @@ go test ./internal/cli -run TestCLIIntegrationDeckFlow -count=1 -v
 
 The integration suite creates a temporary board, lists, cards, labels, comments, attachments, exports a board, imports it again, and cleans up as much as the server allows.
 
-## Notes
+### Performance Testing
+
+Run the live large-board performance test after sourcing credentials:
+
+```bash
+set -a
+source ./secrets.env
+set +a
+go test ./internal/deck -run TestPerformanceLargeBoard -count=1 -v
+```
+
+The performance test currently measures:
+
+- creating 100 cards sequentially
+- creating 100 cards in parallel with 8 workers
+- fetching stack data on a 200-card board
+- fetching board details on a large board
+- moving 50 cards between lists
+- searching cards on a large board
+
+The test logs wall-clock durations so you can compare server behavior over time.
+
+## Not Implemented Yet
 
 - Some Nextcloud Deck API docs are stale; this project uses the public API where it works and the app routes where newer Deck UI behavior requires them
-- `board import-systems` and `board import-schema` exist in code, but your current test server returns `404` for them
-- `board restore` exists in code, but your current test account/server returns `403`
+- `board import-systems` and `board import-schema` are not considered implemented yet because the verified test server returns `404`
+- `board restore` is not considered implemented yet because the verified test account/server returns `403`
+- session lifecycle commands are not considered fully implemented yet because the verified test server is flaky enough that they cannot be treated as reliably tested features
 - Todo support is implemented via markdown checkboxes because Deck does not expose a dedicated public checklist API
