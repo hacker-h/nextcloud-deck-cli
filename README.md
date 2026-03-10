@@ -1,17 +1,10 @@
 # nextcloud-deck-api
 
-Go CLI for Nextcloud Deck with a typed client, command-line workflows, and real integration tests against a live Nextcloud instance.
+Go CLI for Nextcloud Deck.
 
-## What It Does
+## Get Started
 
-- Manages boards, lists, cards, labels, comments, attachments, shares, config, search, upcoming cards, capabilities, users, and card activity
-- Supports markdown-based card todos through checklist parsing in card descriptions
-- Works as both a reusable Go client and a CLI
-- Includes end-to-end integration coverage against a real Deck server
-
-## Environment
-
-Required:
+Env:
 
 - `NEXTCLOUD_BASE_URL`
 - `NEXTCLOUD_USERNAME`
@@ -25,27 +18,13 @@ export NEXTCLOUD_USERNAME="antonia"
 export NEXTCLOUD_PASSWORD="secret"
 ```
 
-The loader also accepts host-only values like `nextcloud.example.com` and normalizes them to `https://...`.
-
-## Build
+Build:
 
 ```bash
 go build ./cmd/deck
 ```
 
-Binary path if built in-place:
-
-```bash
-./deck
-```
-
-Or run directly:
-
-```bash
-go run ./cmd/deck --help
-```
-
-## Quick Start
+Quick start:
 
 ```bash
 deck board create --title "Project" --color ff6600
@@ -53,300 +32,147 @@ deck list create --board 1 --title "Backlog"
 deck card create --board 1 --stack 2 --title "Test"
 deck card describe --board 1 --stack 2 --card 3 --description "- [ ] follow up"
 deck todo add --board 1 --stack 2 --card 3 --text "Call customer"
-deck card move --board 1 --from-stack 2 --to-stack 4 --card 3 --order 999
 deck board export --board 1 --out ./board.json
 deck board import --file ./board.json
 ```
 
-## Command Reference
+## Commands
 
-### Board Commands
-
-List boards:
+`board`
 
 ```bash
-deck board list
-deck board list --details --json
-```
-
-Get one board:
-
-```bash
-deck board get --board 1
-deck board get --board 1 --json
-```
-
-Create a board:
-
-```bash
-deck board create --title "Project" --color ff6600
-```
-
-Update a board:
-
-```bash
-deck board update --board 1 --title "Project Alpha" --color 00aa88
-```
-
-Archive or unarchive a board:
-
-```bash
-deck board archive --board 1
-deck board unarchive --board 1
-```
-
-Clone a board:
-
-```bash
-deck board clone --board 1 --with-cards true --with-labels true --with-due-date true
-deck board clone --board 1 --with-cards true --with-assignments true --move-cards-left true
-```
-
-Export or import a board:
-
-```bash
-deck board export --board 1 --out ./board.json
-deck board import --file ./board.json
-```
-
-List import systems or inspect an import schema:
-
-```bash
+deck board list [--details] [--json]
+deck board get --board ID [--json]
+deck board create --title TEXT [--color HEX] [--json]
+deck board update --board ID [--title TEXT] [--color HEX] [--json]
+deck board archive --board ID [--json]
+deck board unarchive --board ID [--json]
+deck board clone --board ID [--with-cards BOOL] [--with-assignments BOOL] [--with-labels BOOL] [--with-due-date BOOL] [--move-cards-left BOOL] [--restore-archived-cards BOOL]
+deck board export --board ID --out PATH
+deck board import --file PATH
 deck board import-systems
-deck board import-schema --name DeckJson
+deck board import-schema --name NAME
+deck board delete --board ID
+deck board restore --board ID [--json]
 ```
 
-These are currently not supported on the verified test server and should be treated as not implemented for now.
-
-Delete or restore a board:
+`list`
 
 ```bash
-deck board delete --board 1
-deck board restore --board 1
+deck list list --board ID
+deck list archived --board ID
+deck list get --board ID --list ID
+deck list create --board ID --title TEXT [--order N]
+deck list rename --board ID --list ID --title TEXT
+deck list reorder --board ID --list ID --order N
+deck list delete --board ID --list ID
 ```
 
-`deck board restore` is currently not supported on the verified test server and should be treated as not implemented for now.
-
-### List Commands
-
-List active or archived lists:
+`card`
 
 ```bash
-deck list list --board 1
-deck list archived --board 1
+deck card list --board ID --stack ID
+deck card get --board ID --stack ID --card ID
+deck card create --board ID --stack ID --title TEXT [--description TEXT] [--due RFC3339] [--order N]
+deck card clone --card ID --to-stack ID
+deck card rename --board ID --stack ID --card ID --title TEXT
+deck card describe --board ID --stack ID --card ID --description TEXT
+deck card move --board ID --from-stack ID --to-stack ID --card ID [--order N]
+deck card reorder --board ID --stack ID --card ID --order N
+deck card archive --board ID --stack ID --card ID
+deck card unarchive --board ID --stack ID --card ID
+deck card done --card ID
+deck card undone --card ID
+deck card due get --board ID --stack ID --card ID
+deck card due set --board ID --stack ID --card ID --value RFC3339
+deck card due clear --board ID --stack ID --card ID
+deck card assign-user --board ID --stack ID --card ID --user USER
+deck card unassign-user --board ID --stack ID --card ID --user USER
+deck card assign-label --board ID --stack ID --card ID --label ID
+deck card remove-label --board ID --stack ID --card ID --label ID
+deck card delete --board ID --stack ID --card ID
 ```
 
-Get one list:
+`todo`
 
 ```bash
-deck list get --board 1 --list 4
+deck todo list --board ID --stack ID --card ID
+deck todo add --board ID --stack ID --card ID --text TEXT
+deck todo check --board ID --stack ID --card ID --index N
+deck todo uncheck --board ID --stack ID --card ID --index N
 ```
 
-Create a list:
+`label`
 
 ```bash
-deck list create --board 1 --title "Backlog" --order 10
+deck label list --board ID
+deck label get --board ID --label ID
+deck label create --board ID --title TEXT [--color HEX]
+deck label update --board ID --label ID [--title TEXT] [--color HEX]
+deck label delete --board ID --label ID
 ```
 
-Rename or reorder a list:
+`comment`
 
 ```bash
-deck list rename --board 1 --list 4 --title "Doing"
-deck list reorder --board 1 --list 4 --order 20
+deck comment list --card ID
+deck comment create --card ID --message TEXT
+deck comment update --card ID --comment ID --message TEXT
+deck comment delete --card ID --comment ID
 ```
 
-Delete a list:
+`attachment`
 
 ```bash
-deck list delete --board 1 --list 4
+deck attachment list --board ID --stack ID --card ID
+deck attachment upload --board ID --stack ID --card ID --file PATH
+deck attachment download --board ID --stack ID --card ID --attachment ID --out PATH
+deck attachment delete --board ID --stack ID --card ID --attachment ID
+deck attachment restore --board ID --stack ID --card ID --attachment ID
 ```
 
-### Card Commands
-
-List or get cards:
+`share`
 
 ```bash
-deck card list --board 1 --stack 2
-deck card get --board 1 --stack 2 --card 3
+deck share list --board ID
+deck share create --board ID --type N --participant VALUE [--edit BOOL] [--share BOOL] [--manage BOOL]
+deck share update --board ID --share-id ID [--edit BOOL] [--share BOOL] [--manage BOOL]
+deck share delete --board ID --share-id ID
 ```
 
-Create a card:
-
-```bash
-deck card create --board 1 --stack 2 --title "Test"
-deck card create --board 1 --stack 2 --title "Test" --description "Draft" --due "2026-03-08T12:00:00Z"
-```
-
-Clone a card into another list:
-
-```bash
-deck card clone --card 3 --to-stack 5
-```
-
-Rename or describe a card:
-
-```bash
-deck card rename --board 1 --stack 2 --card 3 --title "Renamed"
-deck card describe --board 1 --stack 2 --card 3 --description "- [ ] todo"
-```
-
-Move or reorder a card:
-
-```bash
-deck card move --board 1 --from-stack 2 --to-stack 5 --card 3 --order 999
-deck card reorder --board 1 --stack 5 --card 3 --order 10
-```
-
-Archive, unarchive, complete, or undo completion:
-
-```bash
-deck card archive --board 1 --stack 5 --card 3
-deck card unarchive --board 1 --stack 5 --card 3
-deck card done --card 3
-deck card undone --card 3
-```
-
-Delete a card:
-
-```bash
-deck card delete --board 1 --stack 5 --card 3
-```
-
-Due date workflows:
-
-```bash
-deck card due get --board 1 --stack 2 --card 3
-deck card due set --board 1 --stack 2 --card 3 --value "2026-03-08T12:00:00Z"
-deck card due clear --board 1 --stack 2 --card 3
-```
-
-User and label assignment:
-
-```bash
-deck card assign-user --board 1 --stack 2 --card 3 --user antonia
-deck card unassign-user --board 1 --stack 2 --card 3 --user antonia
-deck card assign-label --board 1 --stack 2 --card 3 --label 9
-deck card remove-label --board 1 --stack 2 --card 3 --label 9
-```
-
-### Todo Commands
-
-Todos are stored as markdown checkboxes inside the card description.
-
-List todos on a card:
-
-```bash
-deck todo list --board 1 --stack 2 --card 3
-```
-
-Add a todo:
-
-```bash
-deck todo add --board 1 --stack 2 --card 3 --text "Call customer"
-```
-
-Check or uncheck a todo:
-
-```bash
-deck todo check --board 1 --stack 2 --card 3 --index 1
-deck todo uncheck --board 1 --stack 2 --card 3 --index 1
-```
-
-### Label Commands
-
-```bash
-deck label list --board 1
-deck label get --board 1 --label 9
-deck label create --board 1 --title "Blocked" --color FF7A66
-deck label update --board 1 --label 9 --title "Ready" --color 31CC7C
-deck label delete --board 1 --label 9
-```
-
-### Comment Commands
-
-```bash
-deck comment list --card 3
-deck comment create --card 3 --message "Need review"
-deck comment update --card 3 --comment 7 --message "Reviewed"
-deck comment delete --card 3 --comment 7
-```
-
-### Attachment Commands
-
-```bash
-deck attachment list --board 1 --stack 2 --card 3
-deck attachment upload --board 1 --stack 2 --card 3 --file ./notes.txt
-deck attachment download --board 1 --stack 2 --card 3 --attachment 12 --out ./notes-copy.txt
-deck attachment delete --board 1 --stack 2 --card 3 --attachment 12
-deck attachment restore --board 1 --stack 2 --card 3 --attachment 12
-```
-
-### Share Commands
-
-Participant type values match Deck ACL types:
-
-- `0` user
-- `1` group
-- `7` circle
-
-```bash
-deck share list --board 1
-deck share create --board 1 --type 0 --participant antonia --edit true --share false --manage false
-deck share update --board 1 --share-id 4 --edit true --share true --manage false
-deck share delete --board 1 --share-id 4
-```
-
-### Config Commands
+`config`
 
 ```bash
 deck config get
-deck config set --key cardIdBadge --value true
-deck config set --key calendar --value false
+deck config set --key KEY --value VALUE
 ```
 
-### Search, Overview, User, Capability, and Activity Commands
-
-Search cards:
+`search`, `overview`, `user`, `capabilities`, `activity`
 
 ```bash
-deck search cards --term "invoice" --limit 10
-```
-
-Upcoming cards:
-
-```bash
+deck search cards --term TEXT [--limit N]
 deck overview upcoming
-```
-
-User search and lookup:
-
-```bash
-deck user search --term anton
-deck user get --user antonia
-```
-
-Capabilities and card activity:
-
-```bash
+deck user search --term TEXT
+deck user get --user USER
 deck capabilities
-deck activity card --card 3
+deck activity card --card ID
 ```
 
-## Output
+`session`
 
-- Most write commands return JSON objects
-- Some simple delete and session commands print a short status line
-- `board list` defaults to tabular output; use `--json` for structured results
+```bash
+deck session create --board ID
+deck session sync --board ID --token TOKEN
+deck session close --board ID --token TOKEN
+```
 
 ## Testing
-
-Run unit and package tests:
 
 ```bash
 go test ./...
 ```
 
-Run the live Deck integration flow after sourcing credentials:
+Live integration:
 
 ```bash
 set -a
@@ -355,38 +181,13 @@ set +a
 go test ./internal/cli -run TestCLIIntegrationDeckFlow -count=1 -v
 ```
 
-The integration suite creates a temporary board, lists, cards, labels, comments, attachments, exports a board, imports it again, and cleans up as much as the server allows.
+Performance and benchmark results:
 
-### Performance Testing
-
-Run the live large-board performance test after sourcing credentials:
-
-```bash
-set -a
-source ./secrets.env
-set +a
-go test ./internal/deck -run TestPerformanceLargeBoard -count=1 -v
-go test ./internal/deck -run TestPerformanceBoardBackupImport -count=1 -v
-```
-
-The performance test currently measures:
-
-- creating 100 cards sequentially
-- creating 100 cards in parallel with 8 workers
-- fetching stack data on a 200-card board
-- fetching board details on a large board
-- moving 50 cards between lists
-- searching cards on a large board
-- exporting and importing board backups at 10-card and 100-card sizes
-
-The test logs wall-clock durations so you can compare server behavior over time.
-
-Latest measured results are captured in `BENCHMARKS.md`.
+- `BENCHMARKS.md`
 
 ## Not Implemented Yet
 
-- Some Nextcloud Deck API docs are stale; this project uses the public API where it works and the app routes where newer Deck UI behavior requires them
-- `board import-systems` and `board import-schema` are not considered implemented yet because the verified test server returns `404`
-- `board restore` is not considered implemented yet because the verified test account/server returns `403`
-- session lifecycle commands are not considered fully implemented yet because the verified test server is flaky enough that they cannot be treated as reliably tested features
-- Todo support is implemented via markdown checkboxes because Deck does not expose a dedicated public checklist API
+- `board import-systems` and `board import-schema` are exposed but not treated as implemented on the verified server because it returns `404`
+- `board restore` is exposed but not treated as implemented on the verified server because it returns `403`
+- `session` commands are exposed but not treated as fully reliable on the verified server
+- todos are markdown checkboxes in descriptions, not a native structured checklist API
