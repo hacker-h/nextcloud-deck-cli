@@ -17,7 +17,7 @@ func runComment(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, comments)
+		return rt.printValue(comments, nil)
 	case "create":
 		fs := newFlagSet("comment create", rt.stderr)
 		cardID := fs.Int64("card", 0, "card id")
@@ -29,7 +29,7 @@ func runComment(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, comment)
+		return rt.printValue(comment, nil)
 	case "update":
 		fs := newFlagSet("comment update", rt.stderr)
 		cardID := fs.Int64("card", 0, "card id")
@@ -42,7 +42,7 @@ func runComment(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, comment)
+		return rt.printValue(comment, nil)
 	case "delete":
 		fs := newFlagSet("comment delete", rt.stderr)
 		cardID := fs.Int64("card", 0, "card id")
@@ -53,7 +53,7 @@ func runComment(rt *runtime, args []string) error {
 		if err := rt.client.DeleteComment(rt.ctx, *cardID, *commentID); err != nil {
 			return err
 		}
-		return printLine(rt.stdout, "deleted comment %d", *commentID)
+		return rt.printStatus("deleted", map[string]any{"cardId": *cardID, "commentId": *commentID}, "deleted comment %d", *commentID)
 	default:
 		return fmt.Errorf("unknown comment command %q", args[0])
 	}

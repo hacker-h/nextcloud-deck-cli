@@ -20,7 +20,7 @@ func runSession(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, session)
+		return rt.printValue(session, nil)
 	case "sync", "close":
 		fs := newFlagSet("session sync", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -35,12 +35,12 @@ func runSession(rt *runtime, args []string) error {
 			if err := rt.client.SyncSession(rt.ctx, *boardID, *token); err != nil {
 				return err
 			}
-			return printLine(rt.stdout, "synced session for board %d", *boardID)
+			return rt.printStatus("synced", map[string]any{"boardId": *boardID}, "synced session for board %d", *boardID)
 		}
 		if err := rt.client.CloseSession(rt.ctx, *boardID, *token); err != nil {
 			return err
 		}
-		return printLine(rt.stdout, "closed session for board %d", *boardID)
+		return rt.printStatus("closed", map[string]any{"boardId": *boardID}, "closed session for board %d", *boardID)
 	default:
 		return fmt.Errorf("unknown session command %q", args[0])
 	}

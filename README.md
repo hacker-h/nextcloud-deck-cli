@@ -36,24 +36,41 @@ deck board export --board 1 --out ./board.json
 deck board import --file ./board.json
 ```
 
+## Output
+
+Commands default to plain text. Use `--json`, `-o json`, or `--output json` for machine-readable JSON output.
+
+```bash
+deck board list
+deck board list --json
+deck card move --board 1 --from-stack 2 --to-stack 3 --card 4 -o json
+```
+
+Supported output formats:
+
+- `text` default
+- `json`
+
+Boolean aliases are also accepted: `--json` and `--text`.
+
 ## Commands
 
 `board`
 
 ```bash
-deck board list [--details] [--json]
-deck board get --board ID [--json]
-deck board create --title TEXT [--color HEX] [--json]
-deck board update --board ID [--title TEXT] [--color HEX] [--json]
-deck board archive --board ID [--json]
-deck board unarchive --board ID [--json]
+deck board list [--details]
+deck board get --board ID
+deck board create --title TEXT [--color HEX]
+deck board update --board ID [--title TEXT] [--color HEX]
+deck board archive --board ID
+deck board unarchive --board ID
 deck board clone --board ID [--with-cards BOOL] [--with-assignments BOOL] [--with-labels BOOL] [--with-due-date BOOL] [--move-cards-left BOOL] [--restore-archived-cards BOOL]
 deck board export --board ID --out PATH
 deck board import --file PATH
 deck board import-systems
 deck board import-schema --name NAME
 deck board delete --board ID
-deck board restore --board ID [--json]
+deck board restore --board ID
 ```
 
 `list`

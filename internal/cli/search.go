@@ -21,7 +21,7 @@ func runSearch(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, cards)
+		return rt.printValue(cards, nil)
 	default:
 		return fmt.Errorf("unknown search command %q", args[0])
 	}

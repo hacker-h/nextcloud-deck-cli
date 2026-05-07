@@ -25,7 +25,7 @@ func runCard(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, cards)
+		return rt.printValue(cards, nil)
 	case "get":
 		fs := newFlagSet("card get", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -41,7 +41,7 @@ func runCard(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, card)
+		return rt.printValue(card, nil)
 	case "create":
 		fs := newFlagSet("card create", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -67,7 +67,7 @@ func runCard(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, card)
+		return rt.printValue(card, nil)
 	case "clone":
 		fs := newFlagSet("card clone", rt.stderr)
 		cardID := fs.Int64("card", 0, "card id")
@@ -82,7 +82,7 @@ func runCard(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, card)
+		return rt.printValue(card, nil)
 	case "delete":
 		fs := newFlagSet("card delete", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -97,7 +97,7 @@ func runCard(rt *runtime, args []string) error {
 		if err := rt.client.DeleteCard(rt.ctx, *boardID, *stackID, *cardID); err != nil {
 			return err
 		}
-		return printLine(rt.stdout, "deleted card %d", *cardID)
+		return rt.printStatus("deleted", map[string]any{"boardId": *boardID, "stackId": *stackID, "cardId": *cardID}, "deleted card %d", *cardID)
 	case "move", "reorder":
 		fs := newFlagSet("card reorder", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -113,12 +113,18 @@ func runCard(rt *runtime, args []string) error {
 			if err := require(*boardID != 0 && *fromStackID != 0 && *toStackID != 0 && *cardID != 0, "card move requires --board --from-stack --to-stack --card"); err != nil {
 				return err
 			}
-			return rt.client.ReorderCard(rt.ctx, *boardID, *fromStackID, *cardID, deck.ReorderCardRequest{Order: *order, StackID: *toStackID})
+			if err := rt.client.ReorderCard(rt.ctx, *boardID, *fromStackID, *cardID, deck.ReorderCardRequest{Order: *order, StackID: *toStackID}); err != nil {
+				return err
+			}
+			return rt.printStatus("moved", map[string]any{"boardId": *boardID, "fromStackId": *fromStackID, "toStackId": *toStackID, "cardId": *cardID, "order": *order}, "moved card %d", *cardID)
 		}
 		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0, "card reorder requires --board --stack --card --order"); err != nil {
 			return err
 		}
-		return rt.client.ReorderCard(rt.ctx, *boardID, *stackID, *cardID, deck.ReorderCardRequest{Order: *order, StackID: *stackID})
+		if err := rt.client.ReorderCard(rt.ctx, *boardID, *stackID, *cardID, deck.ReorderCardRequest{Order: *order, StackID: *stackID}); err != nil {
+			return err
+		}
+		return rt.printStatus("reordered", map[string]any{"boardId": *boardID, "stackId": *stackID, "cardId": *cardID, "order": *order}, "reordered card %d", *cardID)
 	case "archive", "unarchive":
 		fs := newFlagSet("card archive", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -142,7 +148,7 @@ func runCard(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, card)
+		return rt.printValue(card, nil)
 	case "done", "undone":
 		fs := newFlagSet("card done", rt.stderr)
 		cardID := fs.Int64("card", 0, "card id")
@@ -164,7 +170,7 @@ func runCard(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, card)
+		return rt.printValue(card, nil)
 	case "rename", "describe":
 		fs := newFlagSet("card update", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -195,7 +201,7 @@ func runCard(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, updated)
+		return rt.printValue(updated, nil)
 	case "due":
 		return runCardDue(rt, args[1:])
 	case "assign-user", "unassign-user":
@@ -215,12 +221,12 @@ func runCard(rt *runtime, args []string) error {
 			if err != nil {
 				return err
 			}
-			return printJSON(rt.stdout, assignment)
+			return rt.printValue(assignment, nil)
 		}
 		if err := rt.client.UnassignUser(rt.ctx, *boardID, *stackID, *cardID, *userID); err != nil {
 			return err
 		}
-		return printLine(rt.stdout, "unassigned user %s", *userID)
+		return rt.printStatus("unassigned", map[string]any{"boardId": *boardID, "stackId": *stackID, "cardId": *cardID, "user": *userID}, "unassigned user %s", *userID)
 	case "assign-label", "remove-label":
 		fs := newFlagSet("card label", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -234,9 +240,15 @@ func runCard(rt *runtime, args []string) error {
 			return err
 		}
 		if args[0] == "assign-label" {
-			return rt.client.AssignLabel(rt.ctx, *boardID, *stackID, *cardID, *labelID)
+			if err := rt.client.AssignLabel(rt.ctx, *boardID, *stackID, *cardID, *labelID); err != nil {
+				return err
+			}
+			return rt.printStatus("assigned", map[string]any{"boardId": *boardID, "stackId": *stackID, "cardId": *cardID, "labelId": *labelID}, "assigned label %d", *labelID)
 		}
-		return rt.client.RemoveLabel(rt.ctx, *boardID, *stackID, *cardID, *labelID)
+		if err := rt.client.RemoveLabel(rt.ctx, *boardID, *stackID, *cardID, *labelID); err != nil {
+			return err
+		}
+		return rt.printStatus("removed", map[string]any{"boardId": *boardID, "stackId": *stackID, "cardId": *cardID, "labelId": *labelID}, "removed label %d", *labelID)
 	default:
 		return fmt.Errorf("unknown card command %q", args[0])
 	}
@@ -259,7 +271,7 @@ func runCardDue(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, map[string]any{"id": card.ID, "dueDate": card.Duedate})
+		return rt.printValue(map[string]any{"id": card.ID, "dueDate": card.Duedate}, nil)
 	case "set", "clear":
 		fs := newFlagSet("card due set", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -284,7 +296,7 @@ func runCardDue(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, updated)
+		return rt.printValue(updated, nil)
 	default:
 		return fmt.Errorf("unknown card due command %q", args[0])
 	}

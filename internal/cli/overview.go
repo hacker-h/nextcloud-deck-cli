@@ -12,7 +12,7 @@ func runOverview(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, cards)
+		return rt.printValue(cards, nil)
 	default:
 		return fmt.Errorf("unknown overview command %q", args[0])
 	}

@@ -21,7 +21,7 @@ func runShare(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, rules)
+		return rt.printValue(rules, nil)
 	case "create":
 		fs := newFlagSet("share create", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -37,7 +37,7 @@ func runShare(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, rules)
+		return rt.printValue(rules, nil)
 	case "update":
 		fs := newFlagSet("share update", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -51,7 +51,7 @@ func runShare(rt *runtime, args []string) error {
 		if err := rt.client.UpdateShare(rt.ctx, *boardID, *shareID, deck.UpdateACLRuleRequest{PermissionEdit: *edit, PermissionShare: *sharePerm, PermissionManage: *manage}); err != nil {
 			return err
 		}
-		return printLine(rt.stdout, "updated share %d", *shareID)
+		return rt.printStatus("updated", map[string]any{"boardId": *boardID, "shareId": *shareID}, "updated share %d", *shareID)
 	case "delete":
 		fs := newFlagSet("share delete", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -62,7 +62,7 @@ func runShare(rt *runtime, args []string) error {
 		if err := rt.client.DeleteShare(rt.ctx, *boardID, *shareID); err != nil {
 			return err
 		}
-		return printLine(rt.stdout, "deleted share %d", *shareID)
+		return rt.printStatus("deleted", map[string]any{"boardId": *boardID, "shareId": *shareID}, "deleted share %d", *shareID)
 	default:
 		return fmt.Errorf("unknown share command %q", args[0])
 	}

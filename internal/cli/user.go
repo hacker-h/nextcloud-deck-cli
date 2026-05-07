@@ -17,7 +17,7 @@ func runUser(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, results)
+		return rt.printValue(results, nil)
 	case "get":
 		fs := newFlagSet("user get", rt.stderr)
 		userID := fs.String("user", "", "user id")
@@ -28,7 +28,7 @@ func runUser(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, user)
+		return rt.printValue(user, nil)
 	default:
 		return fmt.Errorf("unknown user command %q", args[0])
 	}

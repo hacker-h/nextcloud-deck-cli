@@ -233,6 +233,7 @@ func TestCLIIntegrationDeckFlow(t *testing.T) {
 func runJSON[T any](t *testing.T, args ...string) T {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
+	args = append([]string{"--json"}, args...)
 	if err := Run(args, &stdout, &stderr); err != nil {
 		t.Fatalf("Run(%v) error = %v\nstderr=%s\nstdout=%s", args, err, stderr.String(), stdout.String())
 	}
@@ -261,6 +262,7 @@ func runMaybeJSON[T any](t *testing.T, args ...string) (T, error) {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
 	var zero T
+	args = append([]string{"--json"}, args...)
 	if err := Run(args, &stdout, &stderr); err != nil {
 		return zero, err
 	}
