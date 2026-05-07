@@ -17,6 +17,9 @@ func runLabel(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*boardID != 0, "label list requires --board"); err != nil {
+			return err
+		}
 		labels, err := rt.client.ListLabels(rt.ctx, *boardID)
 		if err != nil {
 			return err
@@ -27,6 +30,9 @@ func runLabel(rt *runtime, args []string) error {
 		boardID := fs.Int64("board", 0, "board id")
 		labelID := fs.Int64("label", 0, "label id")
 		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0 && *labelID != 0, "label get requires --board --label"); err != nil {
 			return err
 		}
 		label, err := rt.client.GetLabel(rt.ctx, *boardID, *labelID)
@@ -42,6 +48,9 @@ func runLabel(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*boardID != 0 && *title != "", "label create requires --board --title"); err != nil {
+			return err
+		}
 		label, err := rt.client.CreateLabel(rt.ctx, *boardID, deck.CreateLabelRequest{Title: *title, Color: *color})
 		if err != nil {
 			return err
@@ -54,6 +63,9 @@ func runLabel(rt *runtime, args []string) error {
 		title := fs.String("title", "", "label title")
 		color := fs.String("color", "", "label color")
 		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0 && *labelID != 0, "label update requires --board --label"); err != nil {
 			return err
 		}
 		current, err := rt.client.GetLabel(rt.ctx, *boardID, *labelID)
@@ -76,6 +88,9 @@ func runLabel(rt *runtime, args []string) error {
 		boardID := fs.Int64("board", 0, "board id")
 		labelID := fs.Int64("label", 0, "label id")
 		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0 && *labelID != 0, "label delete requires --board --label"); err != nil {
 			return err
 		}
 		if err := rt.client.DeleteLabel(rt.ctx, *boardID, *labelID); err != nil {

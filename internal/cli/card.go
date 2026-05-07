@@ -105,7 +105,7 @@ func runCard(rt *runtime, args []string) error {
 		fromStackID := fs.Int64("from-stack", 0, "source stack id")
 		toStackID := fs.Int64("to-stack", 0, "target stack id")
 		cardID := fs.Int64("card", 0, "card id")
-		order := fs.Int64("order", 999, "target order")
+		order := fs.Int64("order", -1, "target order")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
@@ -113,12 +113,16 @@ func runCard(rt *runtime, args []string) error {
 			if err := require(*boardID != 0 && *fromStackID != 0 && *toStackID != 0 && *cardID != 0, "card move requires --board --from-stack --to-stack --card"); err != nil {
 				return err
 			}
-			if err := rt.client.ReorderCard(rt.ctx, *boardID, *fromStackID, *cardID, deck.ReorderCardRequest{Order: *order, StackID: *toStackID}); err != nil {
+			targetOrder := *order
+			if targetOrder < 0 {
+				targetOrder = 999
+			}
+			if err := rt.client.ReorderCard(rt.ctx, *boardID, *fromStackID, *cardID, deck.ReorderCardRequest{Order: targetOrder, StackID: *toStackID}); err != nil {
 				return err
 			}
-			return rt.printStatus("moved", map[string]any{"boardId": *boardID, "fromStackId": *fromStackID, "toStackId": *toStackID, "cardId": *cardID, "order": *order}, "moved card %d", *cardID)
+			return rt.printStatus("moved", map[string]any{"boardId": *boardID, "fromStackId": *fromStackID, "toStackId": *toStackID, "cardId": *cardID, "order": targetOrder}, "moved card %d", *cardID)
 		}
-		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0, "card reorder requires --board --stack --card --order"); err != nil {
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0 && *order >= 0, "card reorder requires --board --stack --card --order"); err != nil {
 			return err
 		}
 		if err := rt.client.ReorderCard(rt.ctx, *boardID, *stackID, *cardID, deck.ReorderCardRequest{Order: *order, StackID: *stackID}); err != nil {
@@ -267,6 +271,9 @@ func runCardDue(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0, "card due get requires --board --stack --card"); err != nil {
+			return err
+		}
 		card, err := rt.client.GetCard(rt.ctx, *boardID, *stackID, *cardID)
 		if err != nil {
 			return err
@@ -281,15 +288,20 @@ func runCardDue(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0, fmt.Sprintf("card due %s requires --board --stack --card", args[0])); err != nil {
+			return err
+		}
+		if args[0] == "set" {
+			if err := require(*value != "", "card due set requires --value"); err != nil {
+				return err
+			}
+		}
 		card, err := rt.client.GetCard(rt.ctx, *boardID, *stackID, *cardID)
 		if err != nil {
 			return err
 		}
 		var due *string
 		if args[0] == "set" {
-			if err := require(*value != "", "card due set requires --value"); err != nil {
-				return err
-			}
 			due = stringPtr(*value)
 		}
 		updated, err := rt.client.UpdateCard(rt.ctx, *boardID, *stackID, *cardID, baseCardUpdate(card, card.Title, &card.Description, due))
