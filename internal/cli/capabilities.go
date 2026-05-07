@@ -5,5 +5,5 @@ func runCapabilities(rt *runtime, args []string) error {
 	if err != nil {
 		return err
 	}
-	return printJSON(rt.stdout, data)
+	return rt.printValue(data, nil)
 }

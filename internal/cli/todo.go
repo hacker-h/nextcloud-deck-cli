@@ -22,7 +22,7 @@ func runTodo(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, extractTodos(card.Description))
+		return rt.printValue(extractTodos(card.Description), nil)
 	case "add":
 		fs := newFlagSet("todo add", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -44,7 +44,7 @@ func runTodo(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, extractTodos(updated.Description))
+		return rt.printValue(extractTodos(updated.Description), nil)
 	case "check", "uncheck":
 		fs := newFlagSet("todo check", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -70,7 +70,7 @@ func runTodo(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, extractTodos(updated.Description))
+		return rt.printValue(extractTodos(updated.Description), nil)
 	default:
 		return fmt.Errorf("unknown todo command %q", args[0])
 	}

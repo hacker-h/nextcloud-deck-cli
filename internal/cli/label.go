@@ -21,7 +21,7 @@ func runLabel(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, labels)
+		return rt.printValue(labels, nil)
 	case "get":
 		fs := newFlagSet("label get", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -33,7 +33,7 @@ func runLabel(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, label)
+		return rt.printValue(label, nil)
 	case "create":
 		fs := newFlagSet("label create", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -46,7 +46,7 @@ func runLabel(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, label)
+		return rt.printValue(label, nil)
 	case "update":
 		fs := newFlagSet("label update", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -70,7 +70,7 @@ func runLabel(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, label)
+		return rt.printValue(label, nil)
 	case "delete":
 		fs := newFlagSet("label delete", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -81,7 +81,7 @@ func runLabel(rt *runtime, args []string) error {
 		if err := rt.client.DeleteLabel(rt.ctx, *boardID, *labelID); err != nil {
 			return err
 		}
-		return printLine(rt.stdout, "deleted label %d", *labelID)
+		return rt.printStatus("deleted", map[string]any{"boardId": *boardID, "labelId": *labelID}, "deleted label %d", *labelID)
 	default:
 		return fmt.Errorf("unknown label command %q", args[0])
 	}

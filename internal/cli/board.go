@@ -14,7 +14,6 @@ func runBoard(rt *runtime, args []string) error {
 	case "list":
 		fs := newFlagSet("board list", rt.stderr)
 		details := fs.Bool("details", false, "include details")
-		jsonOut := fs.Bool("json", false, "json output")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
@@ -22,19 +21,17 @@ func runBoard(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		if *jsonOut {
-			return printJSON(rt.stdout, boards)
-		}
-		for _, board := range boards {
-			if err := printLine(rt.stdout, "%d\t%s", board.ID, board.Title); err != nil {
-				return err
+		return rt.printValue(boards, func() error {
+			for _, board := range boards {
+				if err := printLine(rt.stdout, "%d\t%s", board.ID, board.Title); err != nil {
+					return err
+				}
 			}
-		}
-		return nil
+			return nil
+		})
 	case "get":
 		fs := newFlagSet("board get", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
-		jsonOut := fs.Bool("json", false, "json output")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
@@ -45,15 +42,13 @@ func runBoard(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		if *jsonOut {
-			return printJSON(rt.stdout, board)
-		}
-		return printJSON(rt.stdout, boardSummary(board))
+		return rt.printValue(board, func() error {
+			return printLine(rt.stdout, "%d\t%s", board.ID, board.Title)
+		})
 	case "create":
 		fs := newFlagSet("board create", rt.stderr)
 		title := fs.String("title", "", "board title")
 		color := fs.String("color", "ff0000", "board color")
-		jsonOut := fs.Bool("json", false, "json output")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
@@ -64,16 +59,14 @@ func runBoard(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		if *jsonOut {
-			return printJSON(rt.stdout, board)
-		}
-		return printJSON(rt.stdout, boardSummary(board))
+		return rt.printValue(board, func() error {
+			return printLine(rt.stdout, "%d\t%s", board.ID, board.Title)
+		})
 	case "update", "archive", "unarchive":
 		fs := newFlagSet("board update", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
 		title := fs.String("title", "", "board title")
 		color := fs.String("color", "", "board color")
-		jsonOut := fs.Bool("json", false, "json output")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
@@ -102,10 +95,9 @@ func runBoard(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		if *jsonOut {
-			return printJSON(rt.stdout, updated)
-		}
-		return printJSON(rt.stdout, boardSummary(updated))
+		return rt.printValue(updated, func() error {
+			return printLine(rt.stdout, "%d\t%s", updated.ID, updated.Title)
+		})
 	case "delete":
 		fs := newFlagSet("board delete", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -118,7 +110,7 @@ func runBoard(rt *runtime, args []string) error {
 		if err := rt.client.DeleteBoard(rt.ctx, *boardID); err != nil {
 			return err
 		}
-		return printLine(rt.stdout, "deleted board %d", *boardID)
+		return rt.printStatus("deleted", map[string]any{"boardId": *boardID}, "deleted board %d", *boardID)
 	case "clone":
 		fs := newFlagSet("board clone", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -135,7 +127,7 @@ func runBoard(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, board)
+		return rt.printValue(board, nil)
 	case "export":
 		fs := newFlagSet("board export", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -149,7 +141,7 @@ func runBoard(rt *runtime, args []string) error {
 		if err := rt.client.ExportBoard(rt.ctx, *boardID, *out); err != nil {
 			return err
 		}
-		return printLine(rt.stdout, "exported board %d to %s", *boardID, *out)
+		return rt.printStatus("exported", map[string]any{"boardId": *boardID, "path": *out}, "exported board %d to %s", *boardID, *out)
 	case "import":
 		fs := newFlagSet("board import", rt.stderr)
 		filePath := fs.String("file", "", "export json file")
@@ -163,11 +155,10 @@ func runBoard(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, board)
+		return rt.printValue(board, nil)
 	case "restore":
 		fs := newFlagSet("board restore", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
-		jsonOut := fs.Bool("json", false, "json output")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
@@ -178,16 +169,15 @@ func runBoard(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		if *jsonOut {
-			return printJSON(rt.stdout, board)
-		}
-		return printJSON(rt.stdout, boardSummary(board))
+		return rt.printValue(board, func() error {
+			return printLine(rt.stdout, "%d\t%s", board.ID, board.Title)
+		})
 	case "import-systems":
 		systems, err := rt.client.GetImportSystems(rt.ctx)
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, systems)
+		return rt.printValue(systems, nil)
 	case "import-schema":
 		fs := newFlagSet("board import-schema", rt.stderr)
 		name := fs.String("name", "", "system name")
@@ -201,7 +191,7 @@ func runBoard(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, schema)
+		return rt.printValue(schema, nil)
 	default:
 		return fmt.Errorf("unknown board command %q", args[0])
 	}

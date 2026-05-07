@@ -32,7 +32,7 @@ func runList(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, stacks)
+		return rt.printValue(stacks, nil)
 	case "get":
 		fs := newFlagSet("list get", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -47,7 +47,7 @@ func runList(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, stack)
+		return rt.printValue(stack, nil)
 	case "create":
 		fs := newFlagSet("list create", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -63,7 +63,7 @@ func runList(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, stack)
+		return rt.printValue(stack, nil)
 	case "rename", "reorder":
 		fs := newFlagSet("list update", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -96,7 +96,7 @@ func runList(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, updated)
+		return rt.printValue(updated, nil)
 	case "delete":
 		fs := newFlagSet("list delete", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -110,7 +110,7 @@ func runList(rt *runtime, args []string) error {
 		if err := rt.client.DeleteStack(rt.ctx, *boardID, *listID); err != nil {
 			return err
 		}
-		return printLine(rt.stdout, "deleted list %d", *listID)
+		return rt.printStatus("deleted", map[string]any{"boardId": *boardID, "listId": *listID}, "deleted list %d", *listID)
 	default:
 		return fmt.Errorf("unknown list command %q", args[0])
 	}
