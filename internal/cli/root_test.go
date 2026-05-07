@@ -59,9 +59,18 @@ func TestRunHelpPathsWithoutCredentials(t *testing.T) {
 		{name: "root long help", args: []string{"--help"}, want: "deck <command>"},
 		{name: "root short help", args: []string{"-h"}, want: "deck <command>"},
 		{name: "card help flag", args: []string{"card", "--help"}, want: "deck card list|get|create"},
+		{name: "card short help", args: []string{"card", "-h"}, want: "deck card list|get|create"},
+		{name: "card help subcommand", args: []string{"card", "help"}, want: "deck card list|get|create"},
+		{name: "board help flag", args: []string{"board", "--help"}, want: "deck board list|get|create"},
 		{name: "board help subcommand", args: []string{"board", "help"}, want: "deck board list|get|create"},
 		{name: "board short help", args: []string{"board", "-h"}, want: "deck board list|get|create"},
+		{name: "help board", args: []string{"help", "board"}, want: "deck board list|get|create"},
+		{name: "board list help flag", args: []string{"board", "list", "--help"}, want: "deck board list"},
+		{name: "board list short help", args: []string{"board", "list", "-h"}, want: "deck board list"},
+		{name: "nested board list help command", args: []string{"help", "board", "list"}, want: "deck board list"},
 		{name: "card due help", args: []string{"card", "due", "--help"}, want: "deck card due get|set|clear"},
+		{name: "card due short help", args: []string{"card", "due", "-h"}, want: "deck card due get|set|clear"},
+		{name: "card due help subcommand", args: []string{"card", "due", "help"}, want: "deck card due get|set|clear"},
 		{name: "nested help command", args: []string{"help", "card", "due"}, want: "deck card due get|set|clear"},
 	}
 
