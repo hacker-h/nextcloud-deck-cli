@@ -7,6 +7,11 @@ import (
 )
 
 func Run(args []string, stdout, stderr io.Writer) error {
+	var err error
+	args, output, err := parseOutputArgs(args)
+	if err != nil {
+		return err
+	}
 	if len(args) == 0 {
 		printUsage(stdout)
 		return nil
@@ -15,7 +20,7 @@ func Run(args []string, stdout, stderr io.Writer) error {
 		printUsage(stdout)
 		return nil
 	}
-	rt, err := newRuntime(stdout, stderr)
+	rt, err := newRuntime(stdout, stderr, output)
 	if err != nil {
 		return err
 	}
@@ -60,6 +65,10 @@ func Run(args []string, stdout, stderr io.Writer) error {
 func printUsage(out io.Writer) {
 	_, _ = io.WriteString(out, strings.TrimSpace(`deck <command>
 
+Output:
+  --json, --text, -o json|text, --output json|text
+                         Output format. Defaults to text.
+
 Commands:
   board      list|get|create|update|archive|unarchive|clone|export|import|delete|restore|import-systems|import-schema
   list       list|get|archived|create|rename|reorder|delete
@@ -77,4 +86,54 @@ Commands:
   share      list|create|update|delete
   config     get|set
 `)+"\n")
+}
+
+func parseOutputArgs(args []string) ([]string, outputFormat, error) {
+	output := outputText
+	cleaned := make([]string, 0, len(args))
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		switch {
+		case arg == "--json":
+			output = outputJSON
+		case arg == "--text":
+			output = outputText
+		case arg == "-o" || arg == "--output":
+			if i+1 >= len(args) {
+				return nil, "", fmt.Errorf("%s requires a value", arg)
+			}
+			parsed, err := parseOutputFormat(args[i+1])
+			if err != nil {
+				return nil, "", err
+			}
+			output = parsed
+			i++
+		case strings.HasPrefix(arg, "-o="):
+			parsed, err := parseOutputFormat(strings.TrimPrefix(arg, "-o="))
+			if err != nil {
+				return nil, "", err
+			}
+			output = parsed
+		case strings.HasPrefix(arg, "--output="):
+			parsed, err := parseOutputFormat(strings.TrimPrefix(arg, "--output="))
+			if err != nil {
+				return nil, "", err
+			}
+			output = parsed
+		default:
+			cleaned = append(cleaned, arg)
+		}
+	}
+	return cleaned, output, nil
+}
+
+func parseOutputFormat(raw string) (outputFormat, error) {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "", "json":
+		return outputJSON, nil
+	case "text", "table":
+		return outputText, nil
+	default:
+		return "", fmt.Errorf("unsupported output format %q; supported formats: json, text", raw)
+	}
 }

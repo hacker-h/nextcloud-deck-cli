@@ -17,7 +17,7 @@ func runActivity(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, items)
+		return rt.printValue(items, nil)
 	default:
 		return fmt.Errorf("unknown activity command %q", args[0])
 	}
