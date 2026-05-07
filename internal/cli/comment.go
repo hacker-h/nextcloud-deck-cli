@@ -13,6 +13,9 @@ func runComment(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*cardID != 0, "comment list requires --card"); err != nil {
+			return err
+		}
 		comments, err := rt.client.ListComments(rt.ctx, *cardID)
 		if err != nil {
 			return err
@@ -23,6 +26,9 @@ func runComment(rt *runtime, args []string) error {
 		cardID := fs.Int64("card", 0, "card id")
 		message := fs.String("message", "", "comment message")
 		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*cardID != 0 && *message != "", "comment create requires --card --message"); err != nil {
 			return err
 		}
 		comment, err := rt.client.CreateComment(rt.ctx, *cardID, *message)
@@ -38,6 +44,9 @@ func runComment(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*cardID != 0 && *commentID != 0 && *message != "", "comment update requires --card --comment --message"); err != nil {
+			return err
+		}
 		comment, err := rt.client.UpdateComment(rt.ctx, *cardID, *commentID, *message)
 		if err != nil {
 			return err
@@ -48,6 +57,9 @@ func runComment(rt *runtime, args []string) error {
 		cardID := fs.Int64("card", 0, "card id")
 		commentID := fs.Int64("comment", 0, "comment id")
 		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*cardID != 0 && *commentID != 0, "comment delete requires --card --comment"); err != nil {
 			return err
 		}
 		if err := rt.client.DeleteComment(rt.ctx, *cardID, *commentID); err != nil {
