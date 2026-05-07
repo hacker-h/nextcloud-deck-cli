@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -36,6 +37,8 @@ func TestRunBoardCreate(t *testing.T) {
 }
 
 func TestRunHelp(t *testing.T) {
+	clearNextcloudEnv(t)
+
 	var stdout, stderr bytes.Buffer
 	if err := Run([]string{"help"}, &stdout, &stderr); err != nil {
 		t.Fatalf("Run(help) error = %v", err)
@@ -43,4 +46,120 @@ func TestRunHelp(t *testing.T) {
 	if stdout.Len() == 0 {
 		t.Fatal("expected help output")
 	}
+}
+
+func TestRunHelpPathsWithoutCredentials(t *testing.T) {
+	clearNextcloudEnv(t)
+
+	tests := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{name: "root long help", args: []string{"--help"}, want: "deck <command>"},
+		{name: "root short help", args: []string{"-h"}, want: "deck <command>"},
+		{name: "card help flag", args: []string{"card", "--help"}, want: "deck card list|get|create"},
+		{name: "board help subcommand", args: []string{"board", "help"}, want: "deck board list|get|create"},
+		{name: "board short help", args: []string{"board", "-h"}, want: "deck board list|get|create"},
+		{name: "card due help", args: []string{"card", "due", "--help"}, want: "deck card due get|set|clear"},
+		{name: "nested help command", args: []string{"help", "card", "due"}, want: "deck card due get|set|clear"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			if err := Run(tt.args, &stdout, &stderr); err != nil {
+				t.Fatalf("Run(%v) error = %v; stderr=%s", tt.args, err, stderr.String())
+			}
+			if !strings.Contains(stdout.String(), tt.want) {
+				t.Fatalf("stdout = %q, want substring %q", stdout.String(), tt.want)
+			}
+			if strings.Contains(stderr.String(), "missing env") {
+				t.Fatalf("stderr = %q, want no credential error", stderr.String())
+			}
+		})
+	}
+}
+
+func TestRunUnknownCommandsWithoutCredentials(t *testing.T) {
+	clearNextcloudEnv(t)
+
+	tests := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{name: "unknown root command", args: []string{"bogus"}, want: `unknown command "bogus"`},
+		{name: "unknown board command", args: []string{"board", "bogus"}, want: `unknown board command "bogus"`},
+		{name: "unknown capabilities command", args: []string{"capabilities", "bogus"}, want: `unknown capabilities command "bogus"`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			err := Run(tt.args, &stdout, &stderr)
+			if err == nil {
+				t.Fatalf("Run(%v) error = nil, want %q", tt.args, tt.want)
+			}
+			if !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("error = %q, want substring %q", err.Error(), tt.want)
+			}
+			if strings.Contains(err.Error(), "missing env") || strings.Contains(stderr.String(), "missing env") {
+				t.Fatalf("err=%v stderr=%q, want no credential error", err, stderr.String())
+			}
+		})
+	}
+}
+
+func TestRunMissingSubcommandsWithoutCredentials(t *testing.T) {
+	clearNextcloudEnv(t)
+
+	tests := []struct {
+		name    string
+		args    []string
+		wantOut string
+		wantErr string
+	}{
+		{name: "board", args: []string{"board"}, wantOut: "deck board list|get|create"},
+		{name: "card due", args: []string{"card", "due"}, wantErr: "card due requires get, set, or clear"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			err := Run(tt.args, &stdout, &stderr)
+			if tt.wantErr == "" && err != nil {
+				t.Fatalf("Run(%v) error = %v; stderr=%s", tt.args, err, stderr.String())
+			}
+			if tt.wantErr != "" {
+				if err == nil {
+					t.Fatalf("Run(%v) error = nil, want %q", tt.args, tt.wantErr)
+				}
+				if !strings.Contains(err.Error(), tt.wantErr) {
+					t.Fatalf("error = %q, want substring %q", err.Error(), tt.wantErr)
+				}
+			}
+			if tt.wantOut != "" && !strings.Contains(stdout.String(), tt.wantOut) {
+				t.Fatalf("stdout = %q, want substring %q", stdout.String(), tt.wantOut)
+			}
+			if strings.Contains(errString(err), "missing env") || strings.Contains(stderr.String(), "missing env") {
+				t.Fatalf("err=%v stderr=%q, want no credential error", err, stderr.String())
+			}
+		})
+	}
+}
+
+func clearNextcloudEnv(t *testing.T) {
+	t.Helper()
+	t.Setenv("NEXTCLOUD_BASE_URL", "")
+	t.Setenv("NEXTCLOUD_USERNAME", "")
+	t.Setenv("NEXTCLOUD_PASSWORD", "")
+	t.Setenv("NEXTCLOUD_APP_PASSWORD", "")
+}
+
+func errString(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
 }
