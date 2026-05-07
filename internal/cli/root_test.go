@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 )
 
@@ -241,6 +242,95 @@ func TestRunOutputFormatOptionErrors(t *testing.T) {
 		if err := Run(args, &stdout, &stderr); err == nil {
 			t.Fatalf("Run(%v) succeeded; stdout=%s stderr=%s", args, stdout.String(), stderr.String())
 		}
+	}
+}
+
+func TestRunRequiredFlagValidationForCommandFamilies(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    []string
+		wantErr string
+	}{
+		{name: "label list missing board", args: []string{"label", "list"}, wantErr: "label list requires --board"},
+		{name: "label get missing label", args: []string{"label", "get", "--board", "1"}, wantErr: "label get requires --board --label"},
+		{name: "label create missing title", args: []string{"label", "create", "--board", "1"}, wantErr: "label create requires --board --title"},
+		{name: "label update missing label", args: []string{"label", "update", "--board", "1", "--title", "x"}, wantErr: "label update requires --board --label"},
+		{name: "label delete missing label", args: []string{"label", "delete", "--board", "1"}, wantErr: "label delete requires --board --label"},
+
+		{name: "comment list missing card", args: []string{"comment", "list"}, wantErr: "comment list requires --card"},
+		{name: "comment create missing message", args: []string{"comment", "create", "--card", "1"}, wantErr: "comment create requires --card --message"},
+		{name: "comment update missing comment", args: []string{"comment", "update", "--card", "1", "--message", "x"}, wantErr: "comment update requires --card --comment --message"},
+		{name: "comment delete missing comment", args: []string{"comment", "delete", "--card", "1"}, wantErr: "comment delete requires --card --comment"},
+
+		{name: "attachment list missing card", args: []string{"attachment", "list", "--board", "1", "--stack", "2"}, wantErr: "attachment list requires --board --stack --card"},
+		{name: "attachment upload missing file", args: []string{"attachment", "upload", "--board", "1", "--stack", "2", "--card", "3"}, wantErr: "attachment upload requires --board --stack --card --file"},
+		{name: "attachment download missing out", args: []string{"attachment", "download", "--board", "1", "--stack", "2", "--card", "3", "--attachment", "4"}, wantErr: "attachment download requires --board --stack --card --attachment --out"},
+		{name: "attachment delete missing attachment", args: []string{"attachment", "delete", "--board", "1", "--stack", "2", "--card", "3"}, wantErr: "attachment delete requires --board --stack --card --attachment"},
+		{name: "attachment restore missing attachment", args: []string{"attachment", "restore", "--board", "1", "--stack", "2", "--card", "3"}, wantErr: "attachment restore requires --board --stack --card --attachment"},
+
+		{name: "share list missing board", args: []string{"share", "list"}, wantErr: "share list requires --board"},
+		{name: "share create missing participant", args: []string{"share", "create", "--board", "1"}, wantErr: "share create requires --board --participant"},
+		{name: "share update missing share", args: []string{"share", "update", "--board", "1"}, wantErr: "share update requires --board --share-id"},
+		{name: "share delete missing share", args: []string{"share", "delete", "--board", "1"}, wantErr: "share delete requires --board --share-id"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			runInvalidCommandDoesNotCallAPI(t, tt.args, tt.wantErr)
+		})
+	}
+}
+
+func TestRunRequiredFlagValidationForRemainingWeakPaths(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    []string
+		wantErr string
+	}{
+		{name: "board clone missing board", args: []string{"board", "clone"}, wantErr: "board clone requires --board"},
+		{name: "card reorder missing order", args: []string{"card", "reorder", "--board", "1", "--stack", "2", "--card", "3"}, wantErr: "card reorder requires --board --stack --card --order"},
+		{name: "card due get missing ids", args: []string{"card", "due", "get", "--board", "1", "--stack", "2"}, wantErr: "card due get requires --board --stack --card"},
+		{name: "card due set missing value", args: []string{"card", "due", "set", "--board", "1", "--stack", "2", "--card", "3"}, wantErr: "card due set requires --value"},
+		{name: "todo list missing ids", args: []string{"todo", "list", "--board", "1", "--stack", "2"}, wantErr: "todo list requires --board --stack --card"},
+		{name: "todo add missing ids", args: []string{"todo", "add", "--text", "x"}, wantErr: "todo add requires --board --stack --card"},
+		{name: "todo check missing index", args: []string{"todo", "check", "--board", "1", "--stack", "2", "--card", "3"}, wantErr: "todo check requires --board --stack --card --index"},
+		{name: "activity card missing card", args: []string{"activity", "card"}, wantErr: "activity card requires --card"},
+		{name: "user search missing term", args: []string{"user", "search"}, wantErr: "user search requires --term"},
+		{name: "user get missing user", args: []string{"user", "get"}, wantErr: "user get requires --user"},
+		{name: "config set missing key", args: []string{"config", "set", "--value", "true"}, wantErr: "config set requires --key --value"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			runInvalidCommandDoesNotCallAPI(t, tt.args, tt.wantErr)
+		})
+	}
+}
+
+func runInvalidCommandDoesNotCallAPI(t *testing.T, args []string, wantErr string) {
+	t.Helper()
+
+	var requests int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&requests, 1)
+		http.Error(w, "unexpected request", http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	t.Setenv("NEXTCLOUD_BASE_URL", server.URL)
+	t.Setenv("NEXTCLOUD_USERNAME", "antonia")
+	t.Setenv("NEXTCLOUD_PASSWORD", "pw")
+
+	var stdout, stderr bytes.Buffer
+	err := Run(args, &stdout, &stderr)
+	if err == nil {
+		t.Fatalf("Run(%v) succeeded; stdout=%s stderr=%s", args, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(err.Error(), wantErr) {
+		t.Fatalf("Run(%v) error = %q, want %q", args, err.Error(), wantErr)
+	}
+	if got := atomic.LoadInt32(&requests); got != 0 {
+		t.Fatalf("Run(%v) made %d API requests", args, got)
 	}
 }
 

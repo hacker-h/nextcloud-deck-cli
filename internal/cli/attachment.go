@@ -15,6 +15,9 @@ func runAttachment(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0, "attachment list requires --board --stack --card"); err != nil {
+			return err
+		}
 		attachments, err := rt.client.ListAttachments(rt.ctx, *boardID, *stackID, *cardID)
 		if err != nil {
 			return err
@@ -27,6 +30,9 @@ func runAttachment(rt *runtime, args []string) error {
 		cardID := fs.Int64("card", 0, "card id")
 		filePath := fs.String("file", "", "file path")
 		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0 && *filePath != "", "attachment upload requires --board --stack --card --file"); err != nil {
 			return err
 		}
 		attachment, err := rt.client.UploadAttachment(rt.ctx, *boardID, *stackID, *cardID, *filePath)
@@ -44,6 +50,9 @@ func runAttachment(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0 && *attachmentID != 0 && *out != "", "attachment download requires --board --stack --card --attachment --out"); err != nil {
+			return err
+		}
 		if err := rt.client.DownloadAttachment(rt.ctx, *boardID, *stackID, *cardID, *attachmentID, *out); err != nil {
 			return err
 		}
@@ -57,6 +66,9 @@ func runAttachment(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0 && *attachmentID != 0, "attachment delete requires --board --stack --card --attachment"); err != nil {
+			return err
+		}
 		if err := rt.client.DeleteAttachment(rt.ctx, *boardID, *stackID, *cardID, *attachmentID); err != nil {
 			return err
 		}
@@ -68,6 +80,9 @@ func runAttachment(rt *runtime, args []string) error {
 		cardID := fs.Int64("card", 0, "card id")
 		attachmentID := fs.Int64("attachment", 0, "attachment id")
 		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0 && *attachmentID != 0, "attachment restore requires --board --stack --card --attachment"); err != nil {
 			return err
 		}
 		attachment, err := rt.client.RestoreAttachment(rt.ctx, *boardID, *stackID, *cardID, *attachmentID)

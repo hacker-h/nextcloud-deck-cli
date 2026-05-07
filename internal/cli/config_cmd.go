@@ -24,6 +24,9 @@ func runConfig(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*key != "" && *value != "", "config set requires --key --value"); err != nil {
+			return err
+		}
 		result, err := rt.client.SetConfig(rt.ctx, *key, coerceValue(*value))
 		if err != nil {
 			return err

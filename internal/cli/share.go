@@ -17,6 +17,9 @@ func runShare(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*boardID != 0, "share list requires --board"); err != nil {
+			return err
+		}
 		rules, err := rt.client.ListShares(rt.ctx, *boardID)
 		if err != nil {
 			return err
@@ -31,6 +34,9 @@ func runShare(rt *runtime, args []string) error {
 		share := fs.Bool("share", false, "share permission")
 		manage := fs.Bool("manage", false, "manage permission")
 		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0 && *participant != "", "share create requires --board --participant"); err != nil {
 			return err
 		}
 		rules, err := rt.client.CreateShare(rt.ctx, *boardID, deck.CreateACLRuleRequest{Type: *participantType, Participant: *participant, PermissionEdit: *edit, PermissionShare: *share, PermissionManage: *manage})
@@ -48,6 +54,9 @@ func runShare(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*boardID != 0 && *shareID != 0, "share update requires --board --share-id"); err != nil {
+			return err
+		}
 		if err := rt.client.UpdateShare(rt.ctx, *boardID, *shareID, deck.UpdateACLRuleRequest{PermissionEdit: *edit, PermissionShare: *sharePerm, PermissionManage: *manage}); err != nil {
 			return err
 		}
@@ -57,6 +66,9 @@ func runShare(rt *runtime, args []string) error {
 		boardID := fs.Int64("board", 0, "board id")
 		shareID := fs.Int64("share-id", 0, "share id")
 		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0 && *shareID != 0, "share delete requires --board --share-id"); err != nil {
 			return err
 		}
 		if err := rt.client.DeleteShare(rt.ctx, *boardID, *shareID); err != nil {
