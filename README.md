@@ -30,7 +30,10 @@ Quick start:
 
 ```bash
 deck board create --title "Project" --color ff6600
+deck board find --title "Project"
 deck list create --board 1 --title "Backlog"
+deck list find --board 1 --title "Backlog"
+deck label find --board 1 --title "Bug"
 deck card create --board 1 --stack 2 --title "Test"
 deck card describe --board 1 --stack 2 --card 3 --description "- [ ] follow up"
 deck todo add --board 1 --stack 2 --card 3 --text "Call customer"
@@ -80,11 +83,14 @@ printf 'line 1\nline 2\n' | deck comment create --card 3 --comment-stdin
 
 ## Commands
 
+`find` commands use exact, case-sensitive title matches and fail when a title is missing or duplicated.
+
 `board`
 
 ```bash
 deck board list [--details]
 deck board get --board ID
+deck board find --title TEXT
 deck board create --title TEXT [--color HEX]
 deck board update --board ID [--title TEXT] [--color HEX]
 deck board archive --board ID
@@ -104,6 +110,7 @@ deck board restore --board ID
 deck list list --board ID
 deck list archived --board ID
 deck list get --board ID --list ID
+deck list find --board ID --title TEXT
 deck list create --board ID --title TEXT [--order N]
 deck list rename --board ID --list ID --title TEXT
 deck list reorder --board ID --list ID --order N
@@ -149,6 +156,7 @@ deck todo uncheck --board ID --stack ID --card ID --index N
 ```bash
 deck label list --board ID
 deck label get --board ID --label ID
+deck label find --board ID --title TEXT
 deck label create --board ID --title TEXT [--color HEX]
 deck label update --board ID --label ID [--title TEXT] [--color HEX]
 deck label delete --board ID --label ID

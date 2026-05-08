@@ -8,7 +8,7 @@ import (
 
 func runBoard(rt *runtime, args []string) error {
 	if len(args) == 0 {
-		return printLine(rt.stdout, "deck board list|get|create|update|archive|unarchive|clone|export|import|delete|restore|import-systems|import-schema")
+		return printLine(rt.stdout, "deck board list|get|find|create|update|archive|unarchive|clone|export|import|delete|restore|import-systems|import-schema")
 	}
 	switch args[0] {
 	case "list":
@@ -39,6 +39,22 @@ func runBoard(rt *runtime, args []string) error {
 			return err
 		}
 		board, err := rt.client.GetBoard(rt.ctx, *boardID)
+		if err != nil {
+			return err
+		}
+		return rt.printValue(board, func() error {
+			return printLine(rt.stdout, "%d\t%s", board.ID, board.Title)
+		})
+	case "find":
+		fs := newFlagSet("board find", rt.stderr)
+		title := fs.String("title", "", "board title")
+		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*title != "", "board find requires --title"); err != nil {
+			return err
+		}
+		board, err := rt.client.FindBoardByTitle(rt.ctx, *title)
 		if err != nil {
 			return err
 		}

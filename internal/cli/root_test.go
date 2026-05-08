@@ -886,10 +886,10 @@ func TestRunHelpPathsWithoutCredentials(t *testing.T) {
 		{name: "card help flag", args: []string{"card", "--help"}, want: "deck card list|get|create"},
 		{name: "card short help", args: []string{"card", "-h"}, want: "deck card list|get|create"},
 		{name: "card help subcommand", args: []string{"card", "help"}, want: "deck card list|get|create"},
-		{name: "board help flag", args: []string{"board", "--help"}, want: "deck board list|get|create"},
-		{name: "board help subcommand", args: []string{"board", "help"}, want: "deck board list|get|create"},
-		{name: "board short help", args: []string{"board", "-h"}, want: "deck board list|get|create"},
-		{name: "help board", args: []string{"help", "board"}, want: "deck board list|get|create"},
+		{name: "board help flag", args: []string{"board", "--help"}, want: "deck board list|get|find|create"},
+		{name: "board help subcommand", args: []string{"board", "help"}, want: "deck board list|get|find|create"},
+		{name: "board short help", args: []string{"board", "-h"}, want: "deck board list|get|find|create"},
+		{name: "help board", args: []string{"help", "board"}, want: "deck board list|get|find|create"},
 		{name: "board list help flag", args: []string{"board", "list", "--help"}, want: "deck board list"},
 		{name: "board list short help", args: []string{"board", "list", "-h"}, want: "deck board list"},
 		{name: "nested board list help command", args: []string{"help", "board", "list"}, want: "deck board list"},
@@ -954,7 +954,7 @@ func TestRunMissingSubcommandsWithoutCredentials(t *testing.T) {
 		wantOut string
 		wantErr string
 	}{
-		{name: "board", args: []string{"board"}, wantOut: "deck board list|get|create"},
+		{name: "board", args: []string{"board"}, wantOut: "deck board list|get|find|create"},
 		{name: "card due", args: []string{"card", "due"}, wantErr: "card due requires get, set, or clear"},
 	}
 

@@ -8,7 +8,7 @@ import (
 
 func runLabel(rt *runtime, args []string) error {
 	if len(args) == 0 {
-		return printLine(rt.stdout, "deck label list|get|create|update|delete")
+		return printLine(rt.stdout, "deck label list|get|find|create|update|delete")
 	}
 	switch args[0] {
 	case "list":
@@ -25,6 +25,21 @@ func runLabel(rt *runtime, args []string) error {
 			return err
 		}
 		return rt.printValue(labels, nil)
+	case "find":
+		fs := newFlagSet("label find", rt.stderr)
+		boardID := fs.Int64("board", 0, "board id")
+		title := fs.String("title", "", "label title")
+		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0 && *title != "", "label find requires --board --title"); err != nil {
+			return err
+		}
+		label, err := rt.client.FindLabelByTitle(rt.ctx, *boardID, *title)
+		if err != nil {
+			return err
+		}
+		return rt.printValue(label, nil)
 	case "get":
 		fs := newFlagSet("label get", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")

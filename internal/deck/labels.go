@@ -6,6 +6,26 @@ import (
 	"net/http"
 )
 
+func (c *Client) FindLabelByTitle(ctx context.Context, boardID int64, title string) (Label, error) {
+	labels, err := c.ListLabels(ctx, boardID)
+	if err != nil {
+		return Label{}, err
+	}
+
+	var match Label
+	matches := 0
+	for _, label := range labels {
+		if label.Title == title {
+			match = label
+			matches++
+		}
+	}
+	if matches != 1 {
+		return Label{}, LookupError{Resource: "label", Title: title, BoardID: boardID, Matches: matches}
+	}
+	return match, nil
+}
+
 func (c *Client) GetLabel(ctx context.Context, boardID, labelID int64) (Label, error) {
 	var label Label
 	err := c.doJSON(ctx, http.MethodGet, fmt.Sprintf("/boards/%d/labels/%d", boardID, labelID), nil, &label)
