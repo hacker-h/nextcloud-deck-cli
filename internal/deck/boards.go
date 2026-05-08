@@ -7,6 +7,26 @@ import (
 	"net/http"
 )
 
+func (c *Client) FindBoardByTitle(ctx context.Context, title string) (Board, error) {
+	boards, err := c.GetBoards(ctx, false)
+	if err != nil {
+		return Board{}, err
+	}
+
+	var match Board
+	matches := 0
+	for _, board := range boards {
+		if board.Title == title {
+			match = board
+			matches++
+		}
+	}
+	if matches != 1 {
+		return Board{}, LookupError{Resource: "board", Title: title, Matches: matches}
+	}
+	return match, nil
+}
+
 func (c *Client) CreateBoard(ctx context.Context, req BoardCreateRequest) (Board, error) {
 	var board Board
 	err := c.doJSON(ctx, http.MethodPost, "/boards", req, &board)
