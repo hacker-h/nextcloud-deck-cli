@@ -3,7 +3,6 @@ package cli
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -52,7 +51,7 @@ func newRuntime(stdout, stderr io.Writer, output outputFormat) (*runtime, error)
 
 func newFlagSet(name string, stderr io.Writer) *flag.FlagSet {
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
-	fs.SetOutput(stderr)
+	fs.SetOutput(io.Discard)
 	return fs
 }
 
@@ -85,7 +84,7 @@ func (rt *runtime) printStatus(status string, fields map[string]any, textFormat 
 
 func require(value bool, message string) error {
 	if !value {
-		return errors.New(message)
+		return validationError(message)
 	}
 	return nil
 }
