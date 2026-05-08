@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"path"
-	"strings"
 )
 
 func (c *Client) GetCapabilities(ctx context.Context) (map[string]any, error) {
@@ -38,7 +36,7 @@ func (c *Client) GetCardActivity(ctx context.Context, cardID int64) ([]Activity,
 func (c *Client) nextcloudOCSURL(endpoint string) string {
 	u, _ := url.Parse(c.baseURL)
 	endpointURL, _ := url.Parse(endpoint)
-	u.Path = path.Join(u.Path, "/ocs/v2.php", strings.TrimPrefix(endpointURL.Path, "/"))
+	joinURLPath(u, "/ocs/v2.php", endpointURL)
 	u.RawQuery = endpointURL.RawQuery
 	return u.String()
 }
