@@ -24,14 +24,21 @@ func runComment(rt *runtime, args []string) error {
 	case "create":
 		fs := newFlagSet("comment create", rt.stderr)
 		cardID := fs.Int64("card", 0, "card id")
-		message := fs.String("message", "", "comment message")
+		messageInput := addTextInputFlags(fs, "message", "comment-file", "comment-stdin", "comment message", true)
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
-		if err := require(*cardID != 0 && *message != "", "comment create requires --card --message"); err != nil {
+		if err := require(*cardID != 0, "comment create requires --card --message"); err != nil {
 			return err
 		}
-		comment, err := rt.client.CreateComment(rt.ctx, *cardID, *message)
+		message, hasMessage, err := messageInput.resolve(fs)
+		if err != nil {
+			return err
+		}
+		if err := require(hasMessage && message != "", "comment create requires --card --message"); err != nil {
+			return err
+		}
+		comment, err := rt.client.CreateComment(rt.ctx, *cardID, message)
 		if err != nil {
 			return err
 		}
@@ -40,14 +47,21 @@ func runComment(rt *runtime, args []string) error {
 		fs := newFlagSet("comment update", rt.stderr)
 		cardID := fs.Int64("card", 0, "card id")
 		commentID := fs.Int64("comment", 0, "comment id")
-		message := fs.String("message", "", "comment message")
+		messageInput := addTextInputFlags(fs, "message", "comment-file", "comment-stdin", "comment message", true)
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
-		if err := require(*cardID != 0 && *commentID != 0 && *message != "", "comment update requires --card --comment --message"); err != nil {
+		if err := require(*cardID != 0 && *commentID != 0, "comment update requires --card --comment --message"); err != nil {
 			return err
 		}
-		comment, err := rt.client.UpdateComment(rt.ctx, *cardID, *commentID, *message)
+		message, hasMessage, err := messageInput.resolve(fs)
+		if err != nil {
+			return err
+		}
+		if err := require(hasMessage && message != "", "comment update requires --card --comment --message"); err != nil {
+			return err
+		}
+		comment, err := rt.client.UpdateComment(rt.ctx, *cardID, *commentID, message)
 		if err != nil {
 			return err
 		}

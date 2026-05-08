@@ -3,8 +3,10 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -34,6 +36,66 @@ func TestRunBoardCreate(t *testing.T) {
 	}
 	if payload["id"].(float64) != 7 {
 		t.Fatalf("unexpected payload: %#v", payload)
+	}
+}
+
+func TestRunCardCreateReadsDescriptionFile(t *testing.T) {
+	descriptionPath := t.TempDir() + "/description.md"
+	if err := os.WriteFile(descriptionPath, []byte("line 1\nline 2\n"), 0o600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/index.php/apps/deck/api/v1.0/boards/1/stacks/2/cards" {
+			t.Fatalf("%s %s", r.Method, r.URL.Path)
+		}
+		var payload map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Fatalf("Decode() error = %v", err)
+		}
+		if payload["description"] != "line 1\nline 2\n" {
+			t.Fatalf("description = %#v", payload["description"])
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":3,"title":"Test","description":"line 1\nline 2\n","stackId":2,"type":"plain","order":999,"archived":false}`))
+	}))
+	defer server.Close()
+
+	t.Setenv("NEXTCLOUD_BASE_URL", server.URL)
+	t.Setenv("NEXTCLOUD_USERNAME", "antonia")
+	t.Setenv("NEXTCLOUD_PASSWORD", "pw")
+
+	var stdout, stderr bytes.Buffer
+	if err := Run([]string{"card", "create", "--board", "1", "--stack", "2", "--title", "Test", "--description-file", descriptionPath}, &stdout, &stderr); err != nil {
+		t.Fatalf("Run() error = %v; stderr=%s", err, stderr.String())
+	}
+}
+
+func TestRunCommentCreateReadsCommentStdin(t *testing.T) {
+	withCommandStdin(t, "from\nstdin")
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/ocs/v2.php/apps/deck/api/v1.0/cards/3/comments" {
+			t.Fatalf("%s %s", r.Method, r.URL.Path)
+		}
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("ReadAll() error = %v", err)
+		}
+		if !strings.Contains(string(body), `"message":"from\nstdin"`) {
+			t.Fatalf("body = %s", string(body))
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"ocs":{"meta":{"status":"ok","statuscode":200,"message":"OK"},"data":{"id":9,"objectId":3,"message":"from\nstdin"}}}`))
+	}))
+	defer server.Close()
+
+	t.Setenv("NEXTCLOUD_BASE_URL", server.URL)
+	t.Setenv("NEXTCLOUD_USERNAME", "antonia")
+	t.Setenv("NEXTCLOUD_PASSWORD", "pw")
+
+	var stdout, stderr bytes.Buffer
+	if err := Run([]string{"comment", "create", "--card", "3", "--comment-stdin"}, &stdout, &stderr); err != nil {
+		t.Fatalf("Run() error = %v; stderr=%s", err, stderr.String())
 	}
 }
 
@@ -291,6 +353,8 @@ func TestRunRequiredFlagValidationForRemainingWeakPaths(t *testing.T) {
 		{name: "card reorder missing order", args: []string{"card", "reorder", "--board", "1", "--stack", "2", "--card", "3"}, wantErr: "card reorder requires --board --stack --card --order"},
 		{name: "card due get missing ids", args: []string{"card", "due", "get", "--board", "1", "--stack", "2"}, wantErr: "card due get requires --board --stack --card"},
 		{name: "card due set missing value", args: []string{"card", "due", "set", "--board", "1", "--stack", "2", "--card", "3"}, wantErr: "card due set requires --value"},
+		{name: "card create conflicting text sources", args: []string{"card", "create", "--board", "1", "--stack", "2", "--title", "x", "--description", "x", "--description-file", "description.md"}, wantErr: "choose only one text source"},
+		{name: "comment create conflicting text sources", args: []string{"comment", "create", "--card", "1", "--message", "x", "--body-stdin"}, wantErr: "choose only one text source"},
 		{name: "todo list missing ids", args: []string{"todo", "list", "--board", "1", "--stack", "2"}, wantErr: "todo list requires --board --stack --card"},
 		{name: "todo add missing ids", args: []string{"todo", "add", "--text", "x"}, wantErr: "todo add requires --board --stack --card"},
 		{name: "todo check missing index", args: []string{"todo", "check", "--board", "1", "--stack", "2", "--card", "3"}, wantErr: "todo check requires --board --stack --card --index"},
@@ -469,4 +533,13 @@ func errString(err error) string {
 		return ""
 	}
 	return err.Error()
+}
+
+func withCommandStdin(t *testing.T, input string) {
+	t.Helper()
+	old := commandStdin
+	commandStdin = strings.NewReader(input)
+	t.Cleanup(func() {
+		commandStdin = old
+	})
 }
