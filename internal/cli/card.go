@@ -47,7 +47,7 @@ func runCard(rt *runtime, args []string) error {
 		boardID := fs.Int64("board", 0, "board id")
 		stackID := fs.Int64("stack", 0, "stack id")
 		title := fs.String("title", "", "card title")
-		description := fs.String("description", "", "card description")
+		descriptionInput := addTextInputFlags(fs, "description", "description-file", "description-stdin", "card description", true)
 		due := fs.String("due", "", "ISO-8601 due date")
 		order := fs.Int64("order", 999, "card order")
 		if err := fs.Parse(args[1:]); err != nil {
@@ -56,9 +56,13 @@ func runCard(rt *runtime, args []string) error {
 		if err := require(*boardID != 0 && *stackID != 0 && *title != "", "card create requires --board --stack --title"); err != nil {
 			return err
 		}
+		description, hasDescription, err := descriptionInput.resolve(fs)
+		if err != nil {
+			return err
+		}
 		req := deck.CreateCardRequest{Title: *title, Type: "plain", Order: *order}
-		if *description != "" {
-			req.Description = stringPtr(*description)
+		if hasDescription {
+			req.Description = stringPtr(description)
 		}
 		if *due != "" {
 			req.Duedate = stringPtr(*due)
@@ -181,11 +185,15 @@ func runCard(rt *runtime, args []string) error {
 		stackID := fs.Int64("stack", 0, "stack id")
 		cardID := fs.Int64("card", 0, "card id")
 		title := fs.String("title", "", "card title")
-		description := fs.String("description", "", "card description")
+		descriptionInput := addTextInputFlags(fs, "description", "description-file", "description-stdin", "card description", true)
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
 		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0, fmt.Sprintf("card %s requires --board --stack --card", args[0])); err != nil {
+			return err
+		}
+		description, _, err := descriptionInput.resolve(fs)
+		if err != nil {
 			return err
 		}
 		card, err := rt.client.GetCard(rt.ctx, *boardID, *stackID, *cardID)
@@ -199,7 +207,7 @@ func runCard(rt *runtime, args []string) error {
 			card.Title = *title
 		}
 		if args[0] == "describe" {
-			card.Description = *description
+			card.Description = description
 		}
 		updated, err := rt.client.UpdateCard(rt.ctx, *boardID, *stackID, *cardID, baseCardUpdate(card, card.Title, &card.Description, card.Duedate))
 		if err != nil {
