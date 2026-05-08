@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   unit:
     strategy:
@@ -18,12 +21,12 @@ jobs:
       fail-fast: true
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
-          cache: true
+          cache: false
 
       - name: Build
         run: go build ./...
@@ -34,12 +37,19 @@ jobs:
   vet:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.24"
-          cache: true
+          cache: false
+
+      - name: Reject TODO-skipped tests
+        run: |
+          if grep -R 't.Skip("TODO: implement")' internal; then
+            echo "TODO-skipped tests must be implemented before CI can pass"
+            exit 1
+          fi
 
       - name: Vet
         run: go vet ./...
