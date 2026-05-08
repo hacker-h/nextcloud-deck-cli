@@ -5,6 +5,7 @@ import (
 	"flag"
 	"io"
 	"strings"
+	"time"
 )
 
 type commandHelp struct {
@@ -114,14 +115,16 @@ var helpCommands = map[string]commandHelp{
 
 func Run(args []string, stdout, stderr io.Writer) error {
 	var err error
-	args, output, err := parseOutputArgs(args)
+	var output outputFormat
+	var timeoutOverride time.Duration
+	args, output, timeoutOverride, err = parseGlobalArgs(args)
 	if err != nil {
 		return err
 	}
 	if handled, err := handleBootstrap(args, stdout); handled {
 		return err
 	}
-	rt, err := newRuntime(stdout, stderr, output)
+	rt, err := newRuntimeWithTimeout(stdout, stderr, output, timeoutOverride)
 	if err != nil {
 		return err
 	}
@@ -252,6 +255,9 @@ Output:
   --json, --text, -o json|text, --output json|text
                          Output format. Defaults to text.
 
+Timeout:
+  --timeout DURATION      Request timeout. Defaults to 90s or DECK_TIMEOUT.
+
 Commands:
   board      list|get|create|update|archive|unarchive|clone|export|import|delete|restore|import-systems|import-schema
   list       list|get|archived|create|rename|reorder|delete
@@ -271,8 +277,9 @@ Commands:
 `)+"\n")
 }
 
-func parseOutputArgs(args []string) ([]string, outputFormat, error) {
+func parseGlobalArgs(args []string) ([]string, outputFormat, time.Duration, error) {
 	output := outputText
+	var timeoutOverride time.Duration
 	cleaned := make([]string, 0, len(args))
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
@@ -283,31 +290,47 @@ func parseOutputArgs(args []string) ([]string, outputFormat, error) {
 			output = outputText
 		case arg == "-o" || arg == "--output":
 			if i+1 >= len(args) {
-				return nil, "", validationf("%s requires a value", arg)
+				return nil, "", 0, validationf("%s requires a value", arg)
 			}
 			parsed, err := parseOutputFormat(args[i+1])
 			if err != nil {
-				return nil, "", err
+				return nil, "", 0, err
 			}
 			output = parsed
 			i++
 		case strings.HasPrefix(arg, "-o="):
 			parsed, err := parseOutputFormat(strings.TrimPrefix(arg, "-o="))
 			if err != nil {
-				return nil, "", err
+				return nil, "", 0, err
 			}
 			output = parsed
 		case strings.HasPrefix(arg, "--output="):
 			parsed, err := parseOutputFormat(strings.TrimPrefix(arg, "--output="))
 			if err != nil {
-				return nil, "", err
+				return nil, "", 0, err
 			}
 			output = parsed
+		case arg == "--timeout":
+			if i+1 >= len(args) {
+				return nil, "", 0, validationf("%s requires a value", arg)
+			}
+			parsed, err := parseTimeoutFlag(args[i+1])
+			if err != nil {
+				return nil, "", 0, err
+			}
+			timeoutOverride = parsed
+			i++
+		case strings.HasPrefix(arg, "--timeout="):
+			parsed, err := parseTimeoutFlag(strings.TrimPrefix(arg, "--timeout="))
+			if err != nil {
+				return nil, "", 0, err
+			}
+			timeoutOverride = parsed
 		default:
 			cleaned = append(cleaned, arg)
 		}
 	}
-	return cleaned, output, nil
+	return cleaned, output, timeoutOverride, nil
 }
 
 func parseOutputFormat(raw string) (outputFormat, error) {
@@ -319,4 +342,15 @@ func parseOutputFormat(raw string) (outputFormat, error) {
 	default:
 		return "", validationf("unsupported output format %q; supported formats: json, text", raw)
 	}
+}
+
+func parseTimeoutFlag(raw string) (time.Duration, error) {
+	timeout, err := time.ParseDuration(strings.TrimSpace(raw))
+	if err != nil {
+		return 0, validationf("invalid timeout %q: %v", raw, err)
+	}
+	if timeout <= 0 {
+		return 0, validationf("invalid timeout %q: must be greater than 0", raw)
+	}
+	return timeout, nil
 }
