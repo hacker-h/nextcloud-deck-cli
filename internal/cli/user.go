@@ -13,22 +13,28 @@ func runUser(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*term != "", "user search requires --term"); err != nil {
+			return err
+		}
 		results, err := rt.client.SearchSharees(rt.ctx, *term)
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, results)
+		return rt.printValue(results, nil)
 	case "get":
 		fs := newFlagSet("user get", rt.stderr)
 		userID := fs.String("user", "", "user id")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*userID != "", "user get requires --user"); err != nil {
+			return err
+		}
 		user, err := rt.client.GetUser(rt.ctx, *userID)
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, user)
+		return rt.printValue(user, nil)
 	default:
 		return fmt.Errorf("unknown user command %q", args[0])
 	}

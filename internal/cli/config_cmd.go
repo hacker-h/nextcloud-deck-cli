@@ -16,7 +16,7 @@ func runConfig(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, config)
+		return rt.printValue(config, nil)
 	case "set":
 		fs := newFlagSet("config set", rt.stderr)
 		key := fs.String("key", "", "config key")
@@ -24,11 +24,14 @@ func runConfig(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*key != "" && *value != "", "config set requires --key --value"); err != nil {
+			return err
+		}
 		result, err := rt.client.SetConfig(rt.ctx, *key, coerceValue(*value))
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, result)
+		return rt.printValue(result, nil)
 	default:
 		return fmt.Errorf("unknown config command %q", args[0])
 	}

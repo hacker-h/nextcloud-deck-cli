@@ -18,11 +18,14 @@ func runTodo(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0, "todo list requires --board --stack --card"); err != nil {
+			return err
+		}
 		card, err := rt.client.GetCard(rt.ctx, *boardID, *stackID, *cardID)
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, extractTodos(card.Description))
+		return rt.printValue(extractTodos(card.Description), nil)
 	case "add":
 		fs := newFlagSet("todo add", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -30,6 +33,9 @@ func runTodo(rt *runtime, args []string) error {
 		cardID := fs.Int64("card", 0, "card id")
 		text := fs.String("text", "", "todo text")
 		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0, "todo add requires --board --stack --card"); err != nil {
 			return err
 		}
 		if err := require(*text != "", "todo add requires --text"); err != nil {
@@ -44,7 +50,7 @@ func runTodo(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, extractTodos(updated.Description))
+		return rt.printValue(extractTodos(updated.Description), nil)
 	case "check", "uncheck":
 		fs := newFlagSet("todo check", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -52,6 +58,9 @@ func runTodo(rt *runtime, args []string) error {
 		cardID := fs.Int64("card", 0, "card id")
 		index := fs.String("index", "", "todo index")
 		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0 && *index != "", fmt.Sprintf("todo %s requires --board --stack --card --index", args[0])); err != nil {
 			return err
 		}
 		parsed, err := strconv.Atoi(*index)
@@ -70,7 +79,7 @@ func runTodo(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, extractTodos(updated.Description))
+		return rt.printValue(extractTodos(updated.Description), nil)
 	default:
 		return fmt.Errorf("unknown todo command %q", args[0])
 	}

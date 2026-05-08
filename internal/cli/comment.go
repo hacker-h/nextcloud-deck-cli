@@ -13,11 +13,14 @@ func runComment(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*cardID != 0, "comment list requires --card"); err != nil {
+			return err
+		}
 		comments, err := rt.client.ListComments(rt.ctx, *cardID)
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, comments)
+		return rt.printValue(comments, nil)
 	case "create":
 		fs := newFlagSet("comment create", rt.stderr)
 		cardID := fs.Int64("card", 0, "card id")
@@ -25,11 +28,14 @@ func runComment(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*cardID != 0 && *message != "", "comment create requires --card --message"); err != nil {
+			return err
+		}
 		comment, err := rt.client.CreateComment(rt.ctx, *cardID, *message)
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, comment)
+		return rt.printValue(comment, nil)
 	case "update":
 		fs := newFlagSet("comment update", rt.stderr)
 		cardID := fs.Int64("card", 0, "card id")
@@ -38,11 +44,14 @@ func runComment(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*cardID != 0 && *commentID != 0 && *message != "", "comment update requires --card --comment --message"); err != nil {
+			return err
+		}
 		comment, err := rt.client.UpdateComment(rt.ctx, *cardID, *commentID, *message)
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, comment)
+		return rt.printValue(comment, nil)
 	case "delete":
 		fs := newFlagSet("comment delete", rt.stderr)
 		cardID := fs.Int64("card", 0, "card id")
@@ -50,10 +59,13 @@ func runComment(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*cardID != 0 && *commentID != 0, "comment delete requires --card --comment"); err != nil {
+			return err
+		}
 		if err := rt.client.DeleteComment(rt.ctx, *cardID, *commentID); err != nil {
 			return err
 		}
-		return printLine(rt.stdout, "deleted comment %d", *commentID)
+		return rt.printStatus("deleted", map[string]any{"cardId": *cardID, "commentId": *commentID}, "deleted comment %d", *commentID)
 	default:
 		return fmt.Errorf("unknown comment command %q", args[0])
 	}

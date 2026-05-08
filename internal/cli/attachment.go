@@ -15,11 +15,14 @@ func runAttachment(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0, "attachment list requires --board --stack --card"); err != nil {
+			return err
+		}
 		attachments, err := rt.client.ListAttachments(rt.ctx, *boardID, *stackID, *cardID)
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, attachments)
+		return rt.printValue(attachments, nil)
 	case "upload":
 		fs := newFlagSet("attachment upload", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -29,11 +32,14 @@ func runAttachment(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0 && *filePath != "", "attachment upload requires --board --stack --card --file"); err != nil {
+			return err
+		}
 		attachment, err := rt.client.UploadAttachment(rt.ctx, *boardID, *stackID, *cardID, *filePath)
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, attachment)
+		return rt.printValue(attachment, nil)
 	case "download":
 		fs := newFlagSet("attachment download", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -44,10 +50,13 @@ func runAttachment(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0 && *attachmentID != 0 && *out != "", "attachment download requires --board --stack --card --attachment --out"); err != nil {
+			return err
+		}
 		if err := rt.client.DownloadAttachment(rt.ctx, *boardID, *stackID, *cardID, *attachmentID, *out); err != nil {
 			return err
 		}
-		return printLine(rt.stdout, "downloaded attachment %d", *attachmentID)
+		return rt.printStatus("downloaded", map[string]any{"boardId": *boardID, "stackId": *stackID, "cardId": *cardID, "attachmentId": *attachmentID, "path": *out}, "downloaded attachment %d", *attachmentID)
 	case "delete":
 		fs := newFlagSet("attachment delete", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -57,10 +66,13 @@ func runAttachment(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0 && *attachmentID != 0, "attachment delete requires --board --stack --card --attachment"); err != nil {
+			return err
+		}
 		if err := rt.client.DeleteAttachment(rt.ctx, *boardID, *stackID, *cardID, *attachmentID); err != nil {
 			return err
 		}
-		return printLine(rt.stdout, "deleted attachment %d", *attachmentID)
+		return rt.printStatus("deleted", map[string]any{"boardId": *boardID, "stackId": *stackID, "cardId": *cardID, "attachmentId": *attachmentID}, "deleted attachment %d", *attachmentID)
 	case "restore":
 		fs := newFlagSet("attachment restore", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -70,11 +82,14 @@ func runAttachment(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0 && *attachmentID != 0, "attachment restore requires --board --stack --card --attachment"); err != nil {
+			return err
+		}
 		attachment, err := rt.client.RestoreAttachment(rt.ctx, *boardID, *stackID, *cardID, *attachmentID)
 		if err != nil {
 			return err
 		}
-		return printJSON(rt.stdout, attachment)
+		return rt.printValue(attachment, nil)
 	default:
 		return fmt.Errorf("unknown attachment command %q", args[0])
 	}
