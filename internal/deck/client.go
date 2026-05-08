@@ -221,7 +221,7 @@ func (c *Client) do(ctx context.Context, method, endpoint string, payload any, o
 func (c *Client) endpointURL(endpoint string) string {
 	u, _ := url.Parse(c.baseURL)
 	endpointURL, _ := url.Parse(endpoint)
-	u.Path = path.Join(u.Path, apiPrefix, strings.TrimPrefix(endpointURL.Path, "/"))
+	joinURLPath(u, apiPrefix, endpointURL)
 	u.RawQuery = endpointURL.RawQuery
 	return u.String()
 }
@@ -229,7 +229,7 @@ func (c *Client) endpointURL(endpoint string) string {
 func (c *Client) ocsURL(endpoint string) string {
 	u, _ := url.Parse(c.baseURL)
 	endpointURL, _ := url.Parse(endpoint)
-	u.Path = path.Join(u.Path, ocsPrefix, strings.TrimPrefix(endpointURL.Path, "/"))
+	joinURLPath(u, ocsPrefix, endpointURL)
 	u.RawQuery = endpointURL.RawQuery
 	return u.String()
 }
@@ -237,9 +237,19 @@ func (c *Client) ocsURL(endpoint string) string {
 func (c *Client) appURL(endpoint string) string {
 	u, _ := url.Parse(c.baseURL)
 	endpointURL, _ := url.Parse(endpoint)
-	u.Path = path.Join(u.Path, appPrefix, strings.TrimPrefix(endpointURL.Path, "/"))
+	joinURLPath(u, appPrefix, endpointURL)
 	u.RawQuery = endpointURL.RawQuery
 	return u.String()
+}
+
+func joinURLPath(base *url.URL, prefix string, endpoint *url.URL) {
+	basePath := base.Path
+	baseEscapedPath := base.EscapedPath()
+	base.Path = path.Join(basePath, prefix, strings.TrimPrefix(endpoint.Path, "/"))
+	escaped := path.Join(baseEscapedPath, prefix, strings.TrimPrefix(endpoint.EscapedPath(), "/"))
+	if escaped != base.Path {
+		base.RawPath = escaped
+	}
 }
 
 func (c *Client) doMultipart(ctx context.Context, method, endpoint string, fields map[string]string, fileField, filePath string, out any) error {
