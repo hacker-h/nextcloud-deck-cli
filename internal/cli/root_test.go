@@ -245,6 +245,93 @@ func TestRunOutputFormatOptionErrors(t *testing.T) {
 	}
 }
 
+func TestMainValidationErrorOutput(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	if code := Main([]string{"--output", "yaml"}, &stdout, &stderr); code != 1 {
+		t.Fatalf("Main() exit = %d, want 1", code)
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout = %q, want empty", stdout.String())
+	}
+	if got, want := stderr.String(), "error: validation: unsupported output format \"yaml\"; supported formats: json, text\n"; got != want {
+		t.Fatalf("stderr = %q, want %q", got, want)
+	}
+}
+
+func TestMainCommandValidationKeepsJSONStdoutEmpty(t *testing.T) {
+	t.Setenv("NEXTCLOUD_BASE_URL", "https://cloud.example.com")
+	t.Setenv("NEXTCLOUD_USERNAME", "antonia")
+	t.Setenv("NEXTCLOUD_PASSWORD", "pw")
+
+	var stdout, stderr bytes.Buffer
+	if code := Main([]string{"--json", "board", "create"}, &stdout, &stderr); code != 1 {
+		t.Fatalf("Main() exit = %d, want 1", code)
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout = %q, want empty", stdout.String())
+	}
+	if got, want := stderr.String(), "error: validation: board create requires --title\n"; got != want {
+		t.Fatalf("stderr = %q, want %q", got, want)
+	}
+}
+
+func TestMainAPIErrorKinds(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		statusCode int
+		kind       string
+	}{
+		{name: "api", statusCode: http.StatusBadRequest, kind: "api"},
+		{name: "auth", statusCode: http.StatusUnauthorized, kind: "auth"},
+		{name: "server", statusCode: http.StatusInternalServerError, kind: "server"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tt.statusCode)
+				_ = json.NewEncoder(w).Encode(map[string]any{"status": tt.statusCode, "message": http.StatusText(tt.statusCode)})
+			}))
+			defer server.Close()
+
+			t.Setenv("NEXTCLOUD_BASE_URL", server.URL)
+			t.Setenv("NEXTCLOUD_USERNAME", "antonia")
+			t.Setenv("NEXTCLOUD_PASSWORD", "pw")
+
+			var stdout, stderr bytes.Buffer
+			if code := Main([]string{"board", "list", "--json"}, &stdout, &stderr); code != 1 {
+				t.Fatalf("Main() exit = %d, want 1", code)
+			}
+			if stdout.Len() != 0 {
+				t.Fatalf("stdout = %q, want empty", stdout.String())
+			}
+			if !strings.HasPrefix(stderr.String(), "error: "+tt.kind+": deck api returned status ") {
+				t.Fatalf("stderr = %q, want %s kind", stderr.String(), tt.kind)
+			}
+		})
+	}
+}
+
+func TestMainNetworkErrorKind(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	baseURL := server.URL
+	server.Close()
+
+	t.Setenv("NEXTCLOUD_BASE_URL", baseURL)
+	t.Setenv("NEXTCLOUD_USERNAME", "antonia")
+	t.Setenv("NEXTCLOUD_PASSWORD", "pw")
+
+	var stdout, stderr bytes.Buffer
+	if code := Main([]string{"board", "list"}, &stdout, &stderr); code != 1 {
+		t.Fatalf("Main() exit = %d, want 1", code)
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout = %q, want empty", stdout.String())
+	}
+	if !strings.HasPrefix(stderr.String(), "error: network: ") {
+		t.Fatalf("stderr = %q, want network error", stderr.String())
+	}
+}
+
 func TestRunRequiredFlagValidationForCommandFamilies(t *testing.T) {
 	tests := []struct {
 		name    string

@@ -3,7 +3,6 @@ package cli
 import (
 	"errors"
 	"flag"
-	"fmt"
 	"io"
 	"strings"
 )
@@ -169,7 +168,7 @@ func dispatch(rt *runtime, args []string) error {
 	case "config":
 		return runConfig(rt, args[1:])
 	default:
-		return fmt.Errorf("unknown command %q", args[0])
+		return validationf("unknown command %q", args[0])
 	}
 }
 
@@ -183,7 +182,7 @@ func handleBootstrap(args []string, stdout io.Writer) (bool, error) {
 	}
 	command, ok := helpCommands[args[0]]
 	if !ok {
-		return true, fmt.Errorf("unknown command %q", args[0])
+		return true, validationf("unknown command %q", args[0])
 	}
 	return handleCommandBootstrap(stdout, []string{args[0]}, command, args[1:])
 }
@@ -192,7 +191,7 @@ func handleCommandBootstrap(stdout io.Writer, path []string, command commandHelp
 	if len(args) == 0 {
 		if command.requiresSubcommand {
 			if command.missingMessage != "" {
-				return true, errors.New(command.missingMessage)
+				return true, validationError(command.missingMessage)
 			}
 			return true, printLine(stdout, command.usage)
 		}
@@ -203,7 +202,7 @@ func handleCommandBootstrap(stdout io.Writer, path []string, command commandHelp
 	}
 	subcommand, ok := command.subcommands[args[0]]
 	if command.subcommands != nil && !ok {
-		return true, fmt.Errorf("unknown %s command %q", command.unknownLabel, args[0])
+		return true, validationf("unknown %s command %q", command.unknownLabel, args[0])
 	}
 	if len(args) > 1 && (isHelpArg(args[1]) || args[1] == "help") {
 		usage := subcommand.usage
@@ -225,7 +224,7 @@ func printHelpPath(stdout io.Writer, path []string) error {
 	}
 	command, ok := helpCommands[path[0]]
 	if !ok {
-		return fmt.Errorf("unknown command %q", path[0])
+		return validationf("unknown command %q", path[0])
 	}
 	if len(path) == 1 {
 		return printLine(stdout, command.usage)
@@ -284,7 +283,7 @@ func parseOutputArgs(args []string) ([]string, outputFormat, error) {
 			output = outputText
 		case arg == "-o" || arg == "--output":
 			if i+1 >= len(args) {
-				return nil, "", fmt.Errorf("%s requires a value", arg)
+				return nil, "", validationf("%s requires a value", arg)
 			}
 			parsed, err := parseOutputFormat(args[i+1])
 			if err != nil {
@@ -318,6 +317,6 @@ func parseOutputFormat(raw string) (outputFormat, error) {
 	case "text", "table":
 		return outputText, nil
 	default:
-		return "", fmt.Errorf("unsupported output format %q; supported formats: json, text", raw)
+		return "", validationf("unsupported output format %q; supported formats: json, text", raw)
 	}
 }

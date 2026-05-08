@@ -13,6 +13,14 @@ type Config struct {
 	Password string
 }
 
+type MissingEnvError struct {
+	Names []string
+}
+
+func (e MissingEnvError) Error() string {
+	return fmt.Sprintf("missing env: %s", strings.Join(e.Names, ", "))
+}
+
 func LoadFromEnv() (Config, error) {
 	cfg := Config{
 		BaseURL:  normalizeBaseURL(os.Getenv("NEXTCLOUD_BASE_URL")),
@@ -31,7 +39,7 @@ func LoadFromEnv() (Config, error) {
 		missing = append(missing, "NEXTCLOUD_PASSWORD or NEXTCLOUD_APP_PASSWORD")
 	}
 	if len(missing) > 0 {
-		return Config{}, fmt.Errorf("missing env: %s", strings.Join(missing, ", "))
+		return Config{}, MissingEnvError{Names: missing}
 	}
 
 	return cfg, nil
