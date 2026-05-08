@@ -6,6 +6,13 @@
 go test ./...
 ```
 
+Timeout-sensitive slow runs can use the global timeout flag or environment variable:
+
+```bash
+DECK_TIMEOUT=10m go test ./internal/deck -run TestPerformanceBoardBackupImport -count=1 -v
+deck --timeout 10m board import --file ./large-board.json
+```
+
 Live CLI integration:
 
 ```bash
