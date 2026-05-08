@@ -13,6 +13,9 @@ func runUser(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*term != "", "user search requires --term"); err != nil {
+			return err
+		}
 		results, err := rt.client.SearchSharees(rt.ctx, *term)
 		if err != nil {
 			return err
@@ -22,6 +25,9 @@ func runUser(rt *runtime, args []string) error {
 		fs := newFlagSet("user get", rt.stderr)
 		userID := fs.String("user", "", "user id")
 		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*userID != "", "user get requires --user"); err != nil {
 			return err
 		}
 		user, err := rt.client.GetUser(rt.ctx, *userID)

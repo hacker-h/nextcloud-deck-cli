@@ -123,6 +123,9 @@ func runBoard(rt *runtime, args []string) error {
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
+		if err := require(*boardID != 0, "board clone requires --board"); err != nil {
+			return err
+		}
 		board, err := rt.client.CloneBoard(rt.ctx, *boardID, map[string]bool{"withCards": *withCards, "withAssignments": *withAssignments, "withLabels": *withLabels, "withDueDate": *withDueDate, "moveCardsToLeftStack": *moveLeft, "restoreArchivedCards": *restoreArchived})
 		if err != nil {
 			return err
