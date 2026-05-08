@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hacker-h/nextcloud-deck-api/internal/config"
 )
@@ -43,6 +44,20 @@ func TestCreateCardRequest(t *testing.T) {
 	}
 	if card.ID != 9 {
 		t.Fatalf("card.ID = %d", card.ID)
+	}
+}
+
+func TestNewClientUsesConfiguredTimeout(t *testing.T) {
+	client := NewClient(config.Config{BaseURL: "https://cloud.example.com", Username: "antonia", Password: "pw", Timeout: 2 * time.Minute})
+	if client.httpClient.Timeout != 2*time.Minute {
+		t.Fatalf("http client timeout = %s, want 2m", client.httpClient.Timeout)
+	}
+}
+
+func TestNewClientDefaultsTimeout(t *testing.T) {
+	client := NewClient(config.Config{BaseURL: "https://cloud.example.com", Username: "antonia", Password: "pw"})
+	if client.httpClient.Timeout != config.DefaultTimeout {
+		t.Fatalf("http client timeout = %s, want %s", client.httpClient.Timeout, config.DefaultTimeout)
 	}
 }
 

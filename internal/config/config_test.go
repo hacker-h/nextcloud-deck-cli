@@ -1,6 +1,10 @@
 package config
 
-import "testing"
+import (
+	"strings"
+	"testing"
+	"time"
+)
 
 func TestLoadFromEnvPrefersNormalPassword(t *testing.T) {
 	t.Setenv("NEXTCLOUD_BASE_URL", "cloud.example.com/")
@@ -17,6 +21,39 @@ func TestLoadFromEnvPrefersNormalPassword(t *testing.T) {
 	}
 	if cfg.Password != "pw" {
 		t.Fatalf("Password = %q", cfg.Password)
+	}
+	if cfg.Timeout != DefaultTimeout {
+		t.Fatalf("Timeout = %s, want %s", cfg.Timeout, DefaultTimeout)
+	}
+}
+
+func TestLoadFromEnvReadsDeckTimeout(t *testing.T) {
+	t.Setenv("NEXTCLOUD_BASE_URL", "cloud.example.com")
+	t.Setenv("NEXTCLOUD_USERNAME", "antonia")
+	t.Setenv("NEXTCLOUD_PASSWORD", "pw")
+	t.Setenv("DECK_TIMEOUT", "5m")
+
+	cfg, err := LoadFromEnv()
+	if err != nil {
+		t.Fatalf("LoadFromEnv() error = %v", err)
+	}
+	if cfg.Timeout != 5*time.Minute {
+		t.Fatalf("Timeout = %s, want 5m", cfg.Timeout)
+	}
+}
+
+func TestLoadFromEnvRejectsInvalidDeckTimeout(t *testing.T) {
+	t.Setenv("NEXTCLOUD_BASE_URL", "cloud.example.com")
+	t.Setenv("NEXTCLOUD_USERNAME", "antonia")
+	t.Setenv("NEXTCLOUD_PASSWORD", "pw")
+	t.Setenv("DECK_TIMEOUT", "0s")
+
+	_, err := LoadFromEnv()
+	if err == nil {
+		t.Fatal("expected error for invalid timeout")
+	}
+	if !strings.Contains(err.Error(), "DECK_TIMEOUT") {
+		t.Fatalf("error = %v, want DECK_TIMEOUT", err)
 	}
 }
 
