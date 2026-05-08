@@ -115,3 +115,341 @@ func TestOCSMetaError(t *testing.T) {
 		t.Fatalf("apiErr = %#v", apiErr)
 	}
 }
+
+// --- URL construction ---
+
+func TestEndpointURL(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestOcsURL(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestAppURL(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestNextcloudOCSURL(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+// --- HTTP plumbing ---
+
+func TestDoJSON_GET_Success(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDoJSON_POST_MarshalPayload(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDoJSON_NilOutput(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDoJSON_ContextCancelled(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDoJSON_Non2xx_NoBody(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDoJSON_Non2xx_InvalidJSON(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDecodeOCSResponse_ValidData(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDecodeOCSResponse_NullData(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDecodeOCSResponse_InvalidJSON(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDecodeAPIError_MissingStatusField(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+// --- Boards ---
+
+func TestGetBoards(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestGetBoardsWithDetails(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestGetBoard(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestCreateBoard(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestUpdateBoard(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDeleteBoard(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestRestoreBoard(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+// --- Stacks ---
+
+func TestGetStacks(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestGetArchivedStacks(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestGetStack(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestCreateStack(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestUpdateStack(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDeleteStack(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+// --- Cards ---
+
+func TestGetCard(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestUpdateCard(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDeleteCard(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestReorderCard(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestArchiveCard(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestUnarchiveCard(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestListCards(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestAssignLabel(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestRemoveLabel(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestAssignUser(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestUnassignUser(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+// --- Labels ---
+
+func TestGetLabel(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestListLabels(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestCreateLabel(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestUpdateLabel(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDeleteLabel(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+// --- Comments ---
+
+func TestListComments(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestCreateComment(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestUpdateComment(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDeleteComment(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+// --- Attachments ---
+
+func TestListAttachments(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestUploadAttachment(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDeleteAttachment(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestRestoreAttachment(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDownloadAttachment(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestAttachmentRef(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestAttachmentRef_NotFound(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+// --- Shares ---
+
+func TestListShares(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestCreateShare_ArrayResponse(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestCreateShare_SingleResponse(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestUpdateShare(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestDeleteShare(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+// --- Extras ---
+
+func TestCloneBoard(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestCloneCard(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestMarkCardDone(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestMarkCardUndone(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestSearchCards(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestUpcomingCards(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestExportBoard(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestImportBoardFromFile(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestGetImportSystems(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestGetImportSchema(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+// --- Sessions ---
+
+func TestCreateSession(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestSyncSession(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestCloseSession(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+// --- Config API ---
+
+func TestGetConfig(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestSetConfig(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+// --- Nextcloud ---
+
+func TestGetCapabilities(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestSearchSharees(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestGetUser(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestGetCardActivity(t *testing.T) {
+	t.Skip("TODO: implement")
+}

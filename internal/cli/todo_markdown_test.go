@@ -21,3 +21,57 @@ func TestTodoMarkdownRoundTrip(t *testing.T) {
 		t.Fatalf("expected second todo checked, got %#v", todos[1])
 	}
 }
+
+// --- Todo markdown edge cases ---
+
+func TestExtractTodos_EmptyDescription(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestExtractTodos_NoCheckboxes(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestExtractTodos_MixedBullets(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestExtractTodos_AllChecked(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestExtractTodos_LeadingWhitespace(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestAddTodo_EmptyDescription(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestAddTodo_TrailingNewline(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestAddTodo_NoTrailingNewline(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestSetTodoState_CheckFirst(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestSetTodoState_UncheckLast(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestSetTodoState_OutOfRange(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestSetTodoState_PreserveIndentation(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestSetTodoState_PreserveNonTodoLines(t *testing.T) {
+	t.Skip("TODO: implement")
+}
