@@ -44,19 +44,23 @@ func (e APIError) Error() string {
 }
 
 func NewClient(cfg config.Config) *Client {
+	timeout := cfg.Timeout
+	if timeout <= 0 {
+		timeout = config.DefaultTimeout
+	}
 	return &Client{
 		baseURL:  cfg.BaseURL,
 		username: cfg.Username,
 		password: cfg.Password,
 		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: timeout,
 			Transport: &http.Transport{
 				Proxy:                 http.ProxyFromEnvironment,
 				ForceAttemptHTTP2:     true,
 				MaxIdleConns:          100,
 				MaxIdleConnsPerHost:   20,
 				MaxConnsPerHost:       50,
-				IdleConnTimeout:       90 * time.Second,
+				IdleConnTimeout:       config.DefaultTimeout,
 				TLSHandshakeTimeout:   10 * time.Second,
 				ExpectContinueTimeout: 1 * time.Second,
 			},
@@ -370,19 +374,4 @@ func apiErrorFromOCSMeta(fallbackStatusCode int, meta OCSMeta) (APIError, bool) 
 		return APIError{StatusCode: statusCode, Message: meta.Message}, true
 	}
 	return APIError{}, false
-}
-
-func stringPtr(v string) *string {
-	return &v
-}
-
-func int64Ptr(v int64) *int64 {
-	return &v
-}
-
-func nonEmpty(v, fallback string) string {
-	if v != "" {
-		return v
-	}
-	return fallback
 }

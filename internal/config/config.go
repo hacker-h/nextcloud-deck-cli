@@ -5,12 +5,16 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 )
+
+const DefaultTimeout = 90 * time.Second
 
 type Config struct {
 	BaseURL  string
 	Username string
 	Password string
+	Timeout  time.Duration
 }
 
 type MissingEnvError struct {
@@ -26,6 +30,14 @@ func LoadFromEnv() (Config, error) {
 		BaseURL:  normalizeBaseURL(os.Getenv("NEXTCLOUD_BASE_URL")),
 		Username: strings.TrimSpace(os.Getenv("NEXTCLOUD_USERNAME")),
 		Password: passwordFromEnv(),
+		Timeout:  DefaultTimeout,
+	}
+	if raw := strings.TrimSpace(os.Getenv("DECK_TIMEOUT")); raw != "" {
+		timeout, err := parseTimeout(raw)
+		if err != nil {
+			return Config{}, err
+		}
+		cfg.Timeout = timeout
 	}
 
 	var missing []string
@@ -43,6 +55,17 @@ func LoadFromEnv() (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func parseTimeout(raw string) (time.Duration, error) {
+	timeout, err := time.ParseDuration(strings.TrimSpace(raw))
+	if err != nil {
+		return 0, fmt.Errorf("invalid DECK_TIMEOUT %q: %w", raw, err)
+	}
+	if timeout <= 0 {
+		return 0, fmt.Errorf("invalid DECK_TIMEOUT %q: must be greater than 0", raw)
+	}
+	return timeout, nil
 }
 
 func passwordFromEnv() string {

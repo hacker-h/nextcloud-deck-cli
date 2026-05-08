@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"maps"
 	"reflect"
 	"sort"
 	"strings"
@@ -14,8 +15,6 @@ import (
 	"github.com/hacker-h/nextcloud-deck-api/internal/config"
 	"github.com/hacker-h/nextcloud-deck-api/internal/deck"
 )
-
-const timeout = 90 * time.Second
 
 type runtime struct {
 	client *deck.Client
@@ -33,12 +32,15 @@ const (
 	outputText outputFormat = "text"
 )
 
-func newRuntime(stdout, stderr io.Writer, output outputFormat) (*runtime, error) {
+func newRuntimeWithTimeout(stdout, stderr io.Writer, output outputFormat, timeoutOverride time.Duration) (*runtime, error) {
 	cfg, err := config.LoadFromEnv()
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	if timeoutOverride > 0 {
+		cfg.Timeout = timeoutOverride
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
 	return &runtime{
 		client: deck.NewClient(cfg),
 		stdout: stdout,
@@ -49,7 +51,7 @@ func newRuntime(stdout, stderr io.Writer, output outputFormat) (*runtime, error)
 	}, nil
 }
 
-func newFlagSet(name string, stderr io.Writer) *flag.FlagSet {
+func newFlagSet(name string, _ io.Writer) *flag.FlagSet {
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	return fs
@@ -76,9 +78,7 @@ func (rt *runtime) printStatus(status string, fields map[string]any, textFormat 
 		return printLine(rt.stdout, textFormat, args...)
 	}
 	payload := map[string]any{"status": status}
-	for key, value := range fields {
-		payload[key] = value
-	}
+	maps.Copy(payload, fields)
 	return printJSON(rt.stdout, payload)
 }
 

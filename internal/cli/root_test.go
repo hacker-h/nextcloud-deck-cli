@@ -2,7 +2,9 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +12,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func TestRunBoardCreate(t *testing.T) {
@@ -299,6 +302,59 @@ func TestRunOutputFormatOptionErrors(t *testing.T) {
 		{"--output"},
 		{"-o", "yaml"},
 		{"--output=yaml"},
+	} {
+		var stdout, stderr bytes.Buffer
+		if err := Run(args, &stdout, &stderr); err == nil {
+			t.Fatalf("Run(%v) succeeded; stdout=%s stderr=%s", args, stdout.String(), stderr.String())
+		}
+	}
+}
+
+func TestRunTimeoutFlagCancelsSlowRequest(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(50 * time.Millisecond)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[]`))
+	}))
+	defer server.Close()
+
+	t.Setenv("NEXTCLOUD_BASE_URL", server.URL)
+	t.Setenv("NEXTCLOUD_USERNAME", "antonia")
+	t.Setenv("NEXTCLOUD_PASSWORD", "pw")
+	t.Setenv("DECK_TIMEOUT", "5m")
+
+	var stdout, stderr bytes.Buffer
+	err := Run([]string{"--timeout", "1ms", "board", "list"}, &stdout, &stderr)
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("Run() error = %v, want deadline exceeded", err)
+	}
+}
+
+func TestRunDeckTimeoutEnvCancelsSlowRequest(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(50 * time.Millisecond)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[]`))
+	}))
+	defer server.Close()
+
+	t.Setenv("NEXTCLOUD_BASE_URL", server.URL)
+	t.Setenv("NEXTCLOUD_USERNAME", "antonia")
+	t.Setenv("NEXTCLOUD_PASSWORD", "pw")
+	t.Setenv("DECK_TIMEOUT", "1ms")
+
+	var stdout, stderr bytes.Buffer
+	err := Run([]string{"board", "list"}, &stdout, &stderr)
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("Run() error = %v, want deadline exceeded", err)
+	}
+}
+
+func TestRunTimeoutOptionErrors(t *testing.T) {
+	for _, args := range [][]string{
+		{"--timeout"},
+		{"--timeout", "0s"},
+		{"--timeout=nope"},
 	} {
 		var stdout, stderr bytes.Buffer
 		if err := Run(args, &stdout, &stderr); err == nil {

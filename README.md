@@ -9,6 +9,7 @@ Env:
 - `NEXTCLOUD_BASE_URL`
 - `NEXTCLOUD_USERNAME`
 - `NEXTCLOUD_PASSWORD` or `NEXTCLOUD_APP_PASSWORD`
+- `DECK_TIMEOUT` optional request timeout, Go duration syntax, default `90s`
 
 Example:
 
@@ -16,6 +17,7 @@ Example:
 export NEXTCLOUD_BASE_URL="https://nextcloud.example.com"
 export NEXTCLOUD_USERNAME="antonia"
 export NEXTCLOUD_PASSWORD="secret"
+export DECK_TIMEOUT="5m"
 ```
 
 Build:
@@ -52,6 +54,16 @@ Supported output formats:
 - `json`
 
 Boolean aliases are also accepted: `--json` and `--text`.
+
+## Timeout
+
+Requests default to a `90s` timeout. Use global `--timeout` or `DECK_TIMEOUT` for slower import, export, attachment, or bulk move workloads. The CLI flag wins over the environment value.
+
+```bash
+deck --timeout 5m board import --file ./large-board.json
+deck card move --board 1 --from-stack 2 --to-stack 3 --card 4 --timeout 2m
+DECK_TIMEOUT=10m deck board export --board 1 --out ./board.json
+```
 
 ## Text Inputs
 
