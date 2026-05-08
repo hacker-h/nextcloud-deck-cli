@@ -290,12 +290,13 @@ func parseGlobalArgs(args []string) ([]string, outputFormat, time.Duration, erro
 	output := outputText
 	var timeoutOverride time.Duration
 	cleaned := make([]string, 0, len(args))
+	commandSeen := false
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 		switch {
 		case arg == "--json":
 			output = outputJSON
-		case arg == "--text":
+		case arg == "--text" && !(commandSeen && i+1 < len(args) && !strings.HasPrefix(args[i+1], "-")):
 			output = outputText
 		case arg == "-o" || arg == "--output":
 			if i+1 >= len(args) {
@@ -337,6 +338,9 @@ func parseGlobalArgs(args []string) ([]string, outputFormat, time.Duration, erro
 			timeoutOverride = parsed
 		default:
 			cleaned = append(cleaned, arg)
+			if !strings.HasPrefix(arg, "-") {
+				commandSeen = true
+			}
 		}
 	}
 	return cleaned, output, timeoutOverride, nil

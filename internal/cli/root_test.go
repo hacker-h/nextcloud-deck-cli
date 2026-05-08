@@ -556,321 +556,321 @@ func TestRunHelp(t *testing.T) {
 // --- Run basics ---
 
 func TestRun_NoArgs(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_UnknownCommand(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 // --- Board subcommands ---
 
 func TestRun_BoardList(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_BoardGet(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_BoardGet_MissingFlag(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_BoardUpdate(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_BoardArchive(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_BoardUnarchive(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_BoardDelete(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_BoardClone(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_BoardExport(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_BoardImport(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_BoardRestore(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_BoardImportSystems(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_BoardImportSchema(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 // --- List subcommands ---
 
 func TestRun_ListList(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_ListArchived(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_ListGet(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_ListCreate(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_ListRename(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_ListReorder(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_ListDelete(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 // --- Card subcommands ---
 
 func TestRun_CardList(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardGet(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardCreate(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardClone(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardDelete(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardMove(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardReorder(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardArchive(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardUnarchive(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardDone(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardUndone(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardRename(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardDescribe(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardDueGet(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardDueSet(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardDueClear(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardAssignUser(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardUnassignUser(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardAssignLabel(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CardRemoveLabel(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 // --- Label subcommands ---
 
 func TestRun_LabelList(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_LabelGet(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_LabelCreate(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_LabelUpdate(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_LabelDelete(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 // --- Comment subcommands ---
 
 func TestRun_CommentList(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CommentCreate(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CommentUpdate(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_CommentDelete(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 // --- Attachment subcommands ---
 
 func TestRun_AttachmentList(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_AttachmentUpload(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_AttachmentDownload(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_AttachmentDelete(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_AttachmentRestore(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 // --- Share subcommands ---
 
 func TestRun_ShareList(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_ShareCreate(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_ShareUpdate(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_ShareDelete(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 // --- Config subcommands ---
 
 func TestRun_ConfigGet(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_ConfigSet(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 // --- Other subcommands ---
 
 func TestRun_SearchCards(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_OverviewUpcoming(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_Capabilities(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_UserSearch(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_UserGet(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_ActivityCard(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_SessionCreate(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_SessionSync(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_SessionClose(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_TodoList(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_TodoAdd(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_TodoCheck(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRun_TodoUncheck(t *testing.T) {
-	t.Skip("TODO: implement")
+	runCLISmoke(t)
 }
 
 func TestRunHelpPathsWithoutCredentials(t *testing.T) {
@@ -1005,4 +1005,329 @@ func withCommandStdin(t *testing.T, input string) {
 	t.Cleanup(func() {
 		commandStdin = old
 	})
+}
+
+type cliSmokeCase struct {
+	args     []string
+	want     []string
+	setup    func(t *testing.T, tc *cliSmokeCase)
+	validate func(t *testing.T)
+}
+
+func runCLISmoke(t *testing.T) {
+	t.Helper()
+	cases := cliSmokeCases()
+	tc, ok := cases[t.Name()]
+	if !ok {
+		t.Fatalf("missing CLI smoke case for %s", t.Name())
+	}
+	if tc.setup != nil {
+		tc.setup(t, &tc)
+	}
+	if len(tc.want) == 0 {
+		if tc.args != nil {
+			runCLIWithoutServer(t, tc.args)
+		}
+		if tc.validate != nil {
+			tc.validate(t)
+		}
+		return
+	}
+	seen := map[string]int{}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		key := r.Method + " " + r.URL.Path
+		seen[key]++
+		writeCLIMockResponse(t, w, r)
+	}))
+	defer server.Close()
+	setCLIEnv(t, server.URL)
+	var stdout, stderr bytes.Buffer
+	if err := Run(tc.args, &stdout, &stderr); err != nil {
+		t.Fatalf("Run(%v) error = %v; stdout=%s stderr=%s", tc.args, err, stdout.String(), stderr.String())
+	}
+	if stdout.Len() == 0 {
+		t.Fatalf("Run(%v) produced empty stdout", tc.args)
+	}
+	for _, want := range tc.want {
+		if seen[want] == 0 {
+			t.Fatalf("Run(%v) did not call %s; seen=%#v", tc.args, want, seen)
+		}
+	}
+	if tc.validate != nil {
+		tc.validate(t)
+	}
+}
+
+func cliSmokeCases() map[string]cliSmokeCase {
+	return map[string]cliSmokeCase{
+		"TestRun_NoArgs":         {args: []string{}, validate: wantStdoutContains("deck <command>")},
+		"TestRun_UnknownCommand": {args: []string{"bogus"}, validate: wantRunError(`unknown command "bogus"`)},
+		"TestRun_BoardList":      {args: []string{"board", "list", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards"}},
+		"TestRun_BoardGet":       {args: []string{"board", "get", "--board", "7", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7"}},
+		"TestRun_BoardGet_MissingFlag": {validate: func(t *testing.T) {
+			runInvalidCommandDoesNotCallAPI(t, []string{"board", "get"}, "board get requires --board")
+		}},
+		"TestRun_BoardUpdate":        {args: []string{"board", "update", "--board", "7", "--title", "Updated", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7", "PUT /index.php/apps/deck/api/v1.0/boards/7"}},
+		"TestRun_BoardArchive":       {args: []string{"board", "archive", "--board", "7", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7", "PUT /index.php/apps/deck/api/v1.0/boards/7"}},
+		"TestRun_BoardUnarchive":     {args: []string{"board", "unarchive", "--board", "7", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7", "PUT /index.php/apps/deck/api/v1.0/boards/7"}},
+		"TestRun_BoardDelete":        {args: []string{"board", "delete", "--board", "7", "--json"}, want: []string{"DELETE /index.php/apps/deck/api/v1.0/boards/7"}},
+		"TestRun_BoardClone":         {args: []string{"board", "clone", "--board", "7", "--with-cards", "--json"}, want: []string{"POST /index.php/apps/deck/boards/7/clone"}},
+		"TestRun_BoardExport":        exportBoardSmokeCase(),
+		"TestRun_BoardImport":        importBoardSmokeCase(),
+		"TestRun_BoardRestore":       {args: []string{"board", "restore", "--board", "7", "--json"}, want: []string{"POST /index.php/apps/deck/api/v1.0/boards/7/undo_delete"}},
+		"TestRun_BoardImportSystems": {args: []string{"board", "import-systems", "--json"}, want: []string{"GET /ocs/v2.php/apps/deck/api/v1.0/boards/import/getSystems"}},
+		"TestRun_BoardImportSchema":  {args: []string{"board", "import-schema", "--name", "deck", "--json"}, want: []string{"GET /ocs/v2.php/apps/deck/api/v1.0/boards/import/config/schema/deck"}},
+		"TestRun_ListList":           {args: []string{"list", "list", "--board", "7", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/stacks"}},
+		"TestRun_ListArchived":       {args: []string{"list", "archived", "--board", "7", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/stacks/archived"}},
+		"TestRun_ListGet":            {args: []string{"list", "get", "--board", "7", "--list", "2", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/stacks/2"}},
+		"TestRun_ListCreate":         {args: []string{"list", "create", "--board", "7", "--title", "Doing", "--json"}, want: []string{"POST /index.php/apps/deck/api/v1.0/boards/7/stacks"}},
+		"TestRun_ListRename":         {args: []string{"list", "rename", "--board", "7", "--list", "2", "--title", "Renamed", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/stacks/2", "PUT /index.php/apps/deck/api/v1.0/boards/7/stacks/2"}},
+		"TestRun_ListReorder":        {args: []string{"list", "reorder", "--board", "7", "--list", "2", "--order", "1", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/stacks/2", "PUT /index.php/apps/deck/api/v1.0/boards/7/stacks/2"}},
+		"TestRun_ListDelete":         {args: []string{"list", "delete", "--board", "7", "--list", "2", "--json"}, want: []string{"DELETE /index.php/apps/deck/api/v1.0/boards/7/stacks/2"}},
+		"TestRun_CardList":           {args: []string{"card", "list", "--board", "7", "--stack", "2", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/stacks/2"}},
+		"TestRun_CardGet":            {args: []string{"card", "get", "--board", "7", "--stack", "2", "--card", "9", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9"}},
+		"TestRun_CardCreate":         {args: []string{"card", "create", "--board", "7", "--stack", "2", "--title", "Card", "--json"}, want: []string{"POST /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards"}},
+		"TestRun_CardClone":          {args: []string{"card", "clone", "--card", "9", "--to-stack", "2", "--json"}, want: []string{"GET /index.php/apps/deck/cards/9", "POST /ocs/v2.php/apps/deck/api/v1.0/cards/9/clone"}},
+		"TestRun_CardDelete":         {args: []string{"card", "delete", "--board", "7", "--stack", "2", "--card", "9", "--json"}, want: []string{"DELETE /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9"}},
+		"TestRun_CardMove":           {args: []string{"card", "move", "--board", "7", "--from-stack", "2", "--to-stack", "3", "--card", "9", "--json"}, want: []string{"PUT /index.php/apps/deck/cards/9/reorder"}},
+		"TestRun_CardReorder":        {args: []string{"card", "reorder", "--board", "7", "--stack", "2", "--card", "9", "--order", "1", "--json"}, want: []string{"PUT /index.php/apps/deck/cards/9/reorder"}},
+		"TestRun_CardArchive":        {args: []string{"card", "archive", "--board", "7", "--stack", "2", "--card", "9", "--json"}, want: []string{"PUT /index.php/apps/deck/cards/9/archive"}},
+		"TestRun_CardUnarchive":      {args: []string{"card", "unarchive", "--board", "7", "--stack", "2", "--card", "9", "--json"}, want: []string{"PUT /index.php/apps/deck/cards/9/unarchive"}},
+		"TestRun_CardDone":           {args: []string{"card", "done", "--card", "9", "--json"}, want: []string{"PUT /index.php/apps/deck/cards/9/done"}},
+		"TestRun_CardUndone":         {args: []string{"card", "undone", "--card", "9", "--json"}, want: []string{"PUT /index.php/apps/deck/cards/9/undone"}},
+		"TestRun_CardRename":         {args: []string{"card", "rename", "--board", "7", "--stack", "2", "--card", "9", "--title", "New", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9", "PUT /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9"}},
+		"TestRun_CardDescribe":       {args: []string{"card", "describe", "--board", "7", "--stack", "2", "--card", "9", "--description", "Desc", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9", "PUT /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9"}},
+		"TestRun_CardDueGet":         {args: []string{"card", "due", "get", "--board", "7", "--stack", "2", "--card", "9", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9"}},
+		"TestRun_CardDueSet":         {args: []string{"card", "due", "set", "--board", "7", "--stack", "2", "--card", "9", "--value", "2026-05-09", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9", "PUT /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9"}},
+		"TestRun_CardDueClear":       {args: []string{"card", "due", "clear", "--board", "7", "--stack", "2", "--card", "9", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9", "PUT /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9"}},
+		"TestRun_CardAssignUser":     {args: []string{"card", "assign-user", "--board", "7", "--stack", "2", "--card", "9", "--user", "alice", "--json"}, want: []string{"POST /index.php/apps/deck/cards/9/assign"}},
+		"TestRun_CardUnassignUser":   {args: []string{"card", "unassign-user", "--board", "7", "--stack", "2", "--card", "9", "--user", "alice", "--json"}, want: []string{"PUT /index.php/apps/deck/cards/9/unassign"}},
+		"TestRun_CardAssignLabel":    {args: []string{"card", "assign-label", "--board", "7", "--stack", "2", "--card", "9", "--label", "4", "--json"}, want: []string{"PUT /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9/assignLabel"}},
+		"TestRun_CardRemoveLabel":    {args: []string{"card", "remove-label", "--board", "7", "--stack", "2", "--card", "9", "--label", "4", "--json"}, want: []string{"PUT /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9/removeLabel"}},
+		"TestRun_LabelList":          {args: []string{"label", "list", "--board", "7", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7"}},
+		"TestRun_LabelGet":           {args: []string{"label", "get", "--board", "7", "--label", "4", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/labels/4"}},
+		"TestRun_LabelCreate":        {args: []string{"label", "create", "--board", "7", "--title", "Bug", "--json"}, want: []string{"POST /index.php/apps/deck/api/v1.0/boards/7/labels"}},
+		"TestRun_LabelUpdate":        {args: []string{"label", "update", "--board", "7", "--label", "4", "--title", "New", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/labels/4", "PUT /index.php/apps/deck/api/v1.0/boards/7/labels/4"}},
+		"TestRun_LabelDelete":        {args: []string{"label", "delete", "--board", "7", "--label", "4", "--json"}, want: []string{"DELETE /index.php/apps/deck/api/v1.0/boards/7/labels/4"}},
+		"TestRun_CommentList":        {args: []string{"comment", "list", "--card", "9", "--json"}, want: []string{"GET /ocs/v2.php/apps/deck/api/v1.0/cards/9/comments"}},
+		"TestRun_CommentCreate":      {args: []string{"comment", "create", "--card", "9", "--message", "Hi", "--json"}, want: []string{"POST /ocs/v2.php/apps/deck/api/v1.0/cards/9/comments"}},
+		"TestRun_CommentUpdate":      {args: []string{"comment", "update", "--card", "9", "--comment", "6", "--message", "Hi", "--json"}, want: []string{"PUT /ocs/v2.php/apps/deck/api/v1.0/cards/9/comments/6"}},
+		"TestRun_CommentDelete":      {args: []string{"comment", "delete", "--card", "9", "--comment", "6", "--json"}, want: []string{"DELETE /ocs/v2.php/apps/deck/api/v1.0/cards/9/comments/6"}},
+		"TestRun_AttachmentList":     {args: []string{"attachment", "list", "--board", "7", "--stack", "2", "--card", "9", "--json"}, want: []string{"GET /index.php/apps/deck/cards/9/attachments"}},
+		"TestRun_AttachmentUpload":   uploadAttachmentSmokeCase(),
+		"TestRun_AttachmentDownload": downloadAttachmentSmokeCase(),
+		"TestRun_AttachmentDelete":   {args: []string{"attachment", "delete", "--board", "7", "--stack", "2", "--card", "9", "--attachment", "8", "--json"}, want: []string{"GET /index.php/apps/deck/cards/9/attachments", "DELETE /index.php/apps/deck/cards/9/attachment/deck_file:8"}},
+		"TestRun_AttachmentRestore":  {args: []string{"attachment", "restore", "--board", "7", "--stack", "2", "--card", "9", "--attachment", "8", "--json"}, want: []string{"GET /index.php/apps/deck/cards/9/attachments", "GET /index.php/apps/deck/cards/9/attachment/deck_file:8/restore"}},
+		"TestRun_ShareList":          {args: []string{"share", "list", "--board", "7", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7"}},
+		"TestRun_ShareCreate":        {args: []string{"share", "create", "--board", "7", "--participant", "alice", "--json"}, want: []string{"POST /index.php/apps/deck/api/v1.0/boards/7/acl"}},
+		"TestRun_ShareUpdate":        {args: []string{"share", "update", "--board", "7", "--share-id", "3", "--json"}, want: []string{"PUT /index.php/apps/deck/api/v1.0/boards/7/acl/3"}},
+		"TestRun_ShareDelete":        {args: []string{"share", "delete", "--board", "7", "--share-id", "3", "--json"}, want: []string{"DELETE /index.php/apps/deck/api/v1.0/boards/7/acl/3"}},
+		"TestRun_ConfigGet":          {args: []string{"config", "get", "--json"}, want: []string{"GET /ocs/v2.php/apps/deck/api/v1.0/config"}},
+		"TestRun_ConfigSet":          {args: []string{"config", "set", "--key", "calendar", "--value", "true", "--json"}, want: []string{"POST /ocs/v2.php/apps/deck/api/v1.0/config/calendar"}},
+		"TestRun_SearchCards":        {args: []string{"search", "cards", "--term", "hello", "--json"}, want: []string{"GET /ocs/v2.php/apps/deck/api/v1.0/search"}},
+		"TestRun_OverviewUpcoming":   {args: []string{"overview", "upcoming", "--json"}, want: []string{"GET /ocs/v2.php/apps/deck/api/v1.0/overview/upcoming"}},
+		"TestRun_Capabilities":       {args: []string{"capabilities", "--json"}, want: []string{"GET /ocs/v2.php/cloud/capabilities"}},
+		"TestRun_UserSearch":         {args: []string{"user", "search", "--term", "alice", "--json"}, want: []string{"GET /ocs/v2.php/apps/files_sharing/api/v1/sharees"}},
+		"TestRun_UserGet":            {args: []string{"user", "get", "--user", "alice", "--json"}, want: []string{"GET /ocs/v2.php/cloud/users/alice"}},
+		"TestRun_ActivityCard":       {args: []string{"activity", "card", "--card", "9", "--json"}, want: []string{"GET /ocs/v2.php/apps/activity/api/v2/activity/filter"}},
+		"TestRun_SessionCreate":      {args: []string{"session", "create", "--board", "7", "--json"}, want: []string{"PUT /ocs/v2.php/apps/deck/api/v1.0/session/create"}},
+		"TestRun_SessionSync":        {args: []string{"session", "sync", "--board", "7", "--token", "tok", "--json"}, want: []string{"POST /ocs/v2.php/apps/deck/api/v1.0/session/sync"}},
+		"TestRun_SessionClose":       {args: []string{"session", "close", "--board", "7", "--token", "tok", "--json"}, want: []string{"POST /ocs/v2.php/apps/deck/api/v1.0/session/close"}},
+		"TestRun_TodoList":           {args: []string{"todo", "list", "--board", "7", "--stack", "2", "--card", "9", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9"}},
+		"TestRun_TodoAdd":            {args: []string{"todo", "add", "--board", "7", "--stack", "2", "--card", "9", "--text", "new", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9", "PUT /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9"}},
+		"TestRun_TodoCheck":          {args: []string{"todo", "check", "--board", "7", "--stack", "2", "--card", "9", "--index", "1", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9", "PUT /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9"}},
+		"TestRun_TodoUncheck":        {args: []string{"todo", "uncheck", "--board", "7", "--stack", "2", "--card", "9", "--index", "2", "--json"}, want: []string{"GET /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9", "PUT /index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9"}},
+	}
+}
+
+func setCLIEnv(t *testing.T, baseURL string) {
+	t.Helper()
+	t.Setenv("NEXTCLOUD_BASE_URL", baseURL)
+	t.Setenv("NEXTCLOUD_USERNAME", "antonia")
+	t.Setenv("NEXTCLOUD_PASSWORD", "pw")
+}
+
+func runCLIWithoutServer(t *testing.T, args []string) (string, string, error) {
+	t.Helper()
+	clearNextcloudEnv(t)
+	var stdout, stderr bytes.Buffer
+	err := Run(args, &stdout, &stderr)
+	return stdout.String(), stderr.String(), err
+}
+
+func wantStdoutContains(want string) func(*testing.T) {
+	return func(t *testing.T) {
+		t.Helper()
+		stdout, stderr, err := runCLIWithoutServer(t, cliSmokeCases()[t.Name()].args)
+		if err != nil {
+			t.Fatalf("Run() error = %v; stderr=%s", err, stderr)
+		}
+		if !strings.Contains(stdout, want) {
+			t.Fatalf("stdout = %q, want substring %q", stdout, want)
+		}
+	}
+}
+
+func wantRunError(want string) func(*testing.T) {
+	return func(t *testing.T) {
+		t.Helper()
+		stdout, stderr, err := runCLIWithoutServer(t, cliSmokeCases()[t.Name()].args)
+		if err == nil {
+			t.Fatalf("Run() succeeded; stdout=%s stderr=%s", stdout, stderr)
+		}
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("err = %q, want substring %q", err.Error(), want)
+		}
+	}
+}
+
+func exportBoardSmokeCase() cliSmokeCase {
+	var out string
+	return cliSmokeCase{
+		setup: func(t *testing.T, tc *cliSmokeCase) {
+			out = t.TempDir() + "/board.json"
+			tc.args = []string{"board", "export", "--board", "7", "--out", out, "--json"}
+			tc.want = []string{"GET /index.php/apps/deck/boards/7/export"}
+		},
+		validate: func(t *testing.T) {
+			if data, err := os.ReadFile(out); err != nil || string(data) == "" {
+				t.Fatalf("exported data = %q err=%v", string(data), err)
+			}
+		},
+	}
+}
+
+func importBoardSmokeCase() cliSmokeCase {
+	return cliSmokeCase{setup: func(t *testing.T, tc *cliSmokeCase) {
+		file := t.TempDir() + "/board.json"
+		if err := os.WriteFile(file, []byte(`{"title":"Board"}`), 0o600); err != nil {
+			t.Fatalf("write import file: %v", err)
+		}
+		tc.args = []string{"board", "import", "--file", file, "--json"}
+		tc.want = []string{"POST /index.php/apps/deck/boards/import"}
+	}}
+}
+
+func uploadAttachmentSmokeCase() cliSmokeCase {
+	return cliSmokeCase{setup: func(t *testing.T, tc *cliSmokeCase) {
+		file := t.TempDir() + "/note.txt"
+		if err := os.WriteFile(file, []byte("note"), 0o600); err != nil {
+			t.Fatalf("write upload file: %v", err)
+		}
+		tc.args = []string{"attachment", "upload", "--board", "7", "--stack", "2", "--card", "9", "--file", file, "--json"}
+		tc.want = []string{"POST /index.php/apps/deck/cards/9/attachment"}
+	}}
+}
+
+func downloadAttachmentSmokeCase() cliSmokeCase {
+	var out string
+	return cliSmokeCase{
+		setup: func(t *testing.T, tc *cliSmokeCase) {
+			out = t.TempDir() + "/download.txt"
+			tc.args = []string{"attachment", "download", "--board", "7", "--stack", "2", "--card", "9", "--attachment", "8", "--out", out, "--json"}
+			tc.want = []string{"GET /index.php/apps/deck/cards/9/attachments", "GET /index.php/apps/deck/cards/9/attachment/deck_file:8"}
+		},
+		validate: func(t *testing.T) {
+			if data, err := os.ReadFile(out); err != nil || string(data) != "download" {
+				t.Fatalf("download data = %q err=%v", string(data), err)
+			}
+		},
+	}
+}
+
+func writeCLIMockResponse(t *testing.T, w http.ResponseWriter, r *http.Request) {
+	t.Helper()
+	w.Header().Set("Content-Type", "application/json")
+	path := r.URL.Path
+	if strings.HasPrefix(path, "/ocs/v2.php/") {
+		writeCLIOCSResponse(w, cliOCSDataForPath(r.Method, path))
+		return
+	}
+	if r.Method == http.MethodDelete {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	if strings.HasSuffix(path, "/export") {
+		_, _ = w.Write([]byte(`{"title":"Board"}`))
+		return
+	}
+	if strings.Contains(path, "/attachment/deck_file:8") && !strings.HasSuffix(path, "/restore") {
+		_, _ = w.Write([]byte("download"))
+		return
+	}
+	if r.Method == http.MethodPost && strings.HasSuffix(path, "/stacks") {
+		writeCLIJSONResponse(w, map[string]any{"id": 2, "boardId": 7, "title": "Doing", "order": 1})
+		return
+	}
+	writeCLIJSONResponse(w, cliDataForPathWithMethod(r.Method, path))
+}
+
+func cliOCSDataForPath(method, path string) any {
+	switch {
+	case strings.Contains(path, "/comments"):
+		if method != http.MethodGet || strings.Contains(path, "/comments/6") {
+			return map[string]any{"id": 6, "objectId": 9, "message": "Hi"}
+		}
+		return []map[string]any{{"id": 6, "objectId": 9, "message": "Hi"}}
+	case strings.Contains(path, "/session/create"):
+		return map[string]any{"token": "tok"}
+	case strings.Contains(path, "/session/"):
+		return []any{}
+	case strings.Contains(path, "/search"), strings.Contains(path, "/overview/upcoming"):
+		return []map[string]any{{"id": 9, "title": "Card", "stackId": 2}}
+	case strings.Contains(path, "/activity/"):
+		return []map[string]any{{"activity_id": 1, "subject": "updated"}}
+	case strings.Contains(path, "/boards/import/getSystems"):
+		return []string{"deck"}
+	case strings.Contains(path, "/boards/import/config/schema"):
+		return map[string]any{"type": "object"}
+	default:
+		return map[string]any{"calendar": true, "users": []any{map[string]any{"label": "alice"}}, "uid": "alice"}
+	}
+}
+
+func cliDataForPathWithMethod(method, path string) any {
+	switch {
+	case strings.HasSuffix(path, "/boards"):
+		if strings.Contains(path, "/api/v1.0/boards") {
+			return []map[string]any{{"id": 7, "title": "Board", "color": "ff0000", "archived": false}}
+		}
+	case strings.Contains(path, "/boards/import"):
+		return map[string]any{"id": 7, "title": "Imported", "color": "ff0000"}
+	case strings.Contains(path, "/boards/7/stacks/2/cards/9"):
+		return map[string]any{"id": 9, "title": "Card", "description": "- [ ] first\n- [x] second", "stackId": 2, "type": "plain", "order": 1, "archived": false}
+	case strings.Contains(path, "/boards/7/stacks/2/cards"):
+		return map[string]any{"id": 9, "title": "Card", "stackId": 2, "type": "plain", "order": 1, "archived": false}
+	case strings.Contains(path, "/boards/7/stacks/2"):
+		return map[string]any{"id": 2, "boardId": 7, "title": "Doing", "order": 1, "cards": []map[string]any{{"id": 9, "title": "Card", "stackId": 2}}}
+	case strings.Contains(path, "/boards/7/stacks"):
+		return []map[string]any{{"id": 2, "boardId": 7, "title": "Doing", "order": 1}}
+	case strings.Contains(path, "/labels/4"):
+		return map[string]any{"id": 4, "title": "Bug", "color": "31CC7C"}
+	case strings.Contains(path, "/labels"):
+		return map[string]any{"id": 4, "title": "Bug", "color": "31CC7C"}
+	case strings.Contains(path, "/acl"):
+		return []map[string]any{{"id": 3, "type": 0, "permissionEdit": true, "permissionShare": false, "permissionManage": false, "participant": map[string]any{"uid": "alice"}}}
+	case strings.Contains(path, "/cards/9/attachments"):
+		return []map[string]any{{"id": 8, "cardId": 9, "type": "", "data": "note.txt"}}
+	case strings.Contains(path, "/cards/9/attachment"):
+		return map[string]any{"id": 8, "cardId": 9, "type": "deck_file", "data": "note.txt"}
+	case strings.Contains(path, "/cards/9/assign"):
+		return map[string]any{"id": 5, "participant": map[string]any{"uid": "alice"}}
+	case strings.Contains(path, "/cards/9"):
+		return map[string]any{"id": 9, "title": "Card", "description": "- [ ] first\n- [x] second", "stackId": 2, "type": "plain", "order": 1, "archived": false}
+	case strings.Contains(path, "/boards/7/clone"):
+		return map[string]any{"id": 17, "title": "Board copy", "color": "ff0000"}
+	case strings.Contains(path, "/boards/7"):
+		return map[string]any{"id": 7, "title": "Board", "color": "ff0000", "archived": false, "labels": []map[string]any{{"id": 4, "title": "Bug", "color": "31CC7C"}}, "acl": []map[string]any{{"id": 3, "type": 0, "permissionEdit": true, "permissionShare": false, "permissionManage": false, "participant": map[string]any{"uid": "alice"}}}}
+	}
+	return map[string]any{"id": 1, "title": "ok"}
+}
+
+func writeCLIJSONResponse(w http.ResponseWriter, data any) {
+	_ = json.NewEncoder(w).Encode(data)
+}
+
+func writeCLIOCSResponse(w http.ResponseWriter, data any) {
+	_ = json.NewEncoder(w).Encode(map[string]any{"ocs": map[string]any{"meta": map[string]any{"status": "ok", "statuscode": 200}, "data": data}})
 }
