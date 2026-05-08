@@ -53,6 +53,19 @@ Supported output formats:
 
 Boolean aliases are also accepted: `--json` and `--text`.
 
+## Text Inputs
+
+Multiline text can come from flags, files, or stdin. Use exactly one source per command.
+
+- Card descriptions: `--description TEXT`, `--description-file PATH`, `--description-stdin`
+- Comment messages: `--message TEXT`, `--comment-file PATH`, `--comment-stdin`
+- Generic aliases for both: `--body-file PATH`, `--body-stdin`
+
+```bash
+deck card describe --board 1 --stack 2 --card 3 --description-file ./notes.md
+printf 'line 1\nline 2\n' | deck comment create --card 3 --comment-stdin
+```
+
 ## Commands
 
 `board`
@@ -90,10 +103,10 @@ deck list delete --board ID --list ID
 ```bash
 deck card list --board ID --stack ID
 deck card get --board ID --stack ID --card ID
-deck card create --board ID --stack ID --title TEXT [--description TEXT] [--due RFC3339] [--order N]
+deck card create --board ID --stack ID --title TEXT [--description TEXT|--description-file PATH|--description-stdin|--body-file PATH|--body-stdin] [--due RFC3339] [--order N]
 deck card clone --card ID --to-stack ID
 deck card rename --board ID --stack ID --card ID --title TEXT
-deck card describe --board ID --stack ID --card ID --description TEXT
+deck card describe --board ID --stack ID --card ID [--description TEXT|--description-file PATH|--description-stdin|--body-file PATH|--body-stdin]
 deck card move --board ID --from-stack ID --to-stack ID --card ID [--order N]
 deck card reorder --board ID --stack ID --card ID --order N
 deck card archive --board ID --stack ID --card ID
@@ -133,8 +146,8 @@ deck label delete --board ID --label ID
 
 ```bash
 deck comment list --card ID
-deck comment create --card ID --message TEXT
-deck comment update --card ID --comment ID --message TEXT
+deck comment create --card ID --message TEXT|--comment-file PATH|--comment-stdin|--body-file PATH|--body-stdin
+deck comment update --card ID --comment ID --message TEXT|--comment-file PATH|--comment-stdin|--body-file PATH|--body-stdin
 deck comment delete --card ID --comment ID
 ```
 
