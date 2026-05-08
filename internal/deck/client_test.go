@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -59,5 +60,58 @@ func TestAPIError(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "title must be provided") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+	var apiErr APIError
+	if !errors.As(err, &apiErr) {
+		t.Fatalf("error type = %T, want APIError", err)
+	}
+	if apiErr.StatusCode != http.StatusBadRequest {
+		t.Fatalf("StatusCode = %d, want %d", apiErr.StatusCode, http.StatusBadRequest)
+	}
+}
+
+func TestAPIErrorDecodesOCSBody(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"ocs":{"meta":{"status":"failure","statuscode":500,"message":"maintenance"},"data":null}}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(config.Config{BaseURL: server.URL, Username: "antonia", Password: "pw"})
+	_, err := client.GetBoards(context.Background(), false)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	var apiErr APIError
+	if !errors.As(err, &apiErr) {
+		t.Fatalf("error type = %T, want APIError", err)
+	}
+	if apiErr.StatusCode != http.StatusInternalServerError || apiErr.Message != "maintenance" {
+		t.Fatalf("apiErr = %#v", apiErr)
+	}
+}
+
+func TestOCSMetaError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/ocs/v2.php/apps/deck/api/v1.0/config" {
+			t.Fatalf("path = %q", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"ocs":{"meta":{"status":"failure","statuscode":403,"message":"forbidden"},"data":null}}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(config.Config{BaseURL: server.URL, Username: "antonia", Password: "pw"})
+	_, err := client.GetConfig(context.Background())
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	var apiErr APIError
+	if !errors.As(err, &apiErr) {
+		t.Fatalf("error type = %T, want APIError", err)
+	}
+	if apiErr.StatusCode != http.StatusForbidden || apiErr.Message != "forbidden" {
+		t.Fatalf("apiErr = %#v", apiErr)
 	}
 }

@@ -314,14 +314,26 @@ func (c *Client) downloadToFile(ctx context.Context, rawURL, outPath string) err
 
 func decodeAPIError(resp *http.Response) error {
 	body, _ := io.ReadAll(resp.Body)
+	return apiErrorFromBody(resp.StatusCode, body)
+}
+
+func apiErrorFromBody(statusCode int, body []byte) APIError {
 	var apiErr APIError
-	if len(body) > 0 && json.Unmarshal(body, &apiErr) == nil {
+	if len(body) > 0 && json.Unmarshal(body, &apiErr) == nil && (apiErr.StatusCode != 0 || apiErr.Message != "") {
 		if apiErr.StatusCode == 0 {
-			apiErr.StatusCode = resp.StatusCode
+			apiErr.StatusCode = statusCode
 		}
 		return apiErr
 	}
-	return APIError{StatusCode: resp.StatusCode, Message: strings.TrimSpace(string(body))}
+
+	var ocsErr OCSResponse[json.RawMessage]
+	if len(body) > 0 && json.Unmarshal(body, &ocsErr) == nil {
+		if apiErr, ok := apiErrorFromOCSMeta(statusCode, ocsErr.OCS.Meta); ok {
+			return apiErr
+		}
+	}
+
+	return APIError{StatusCode: statusCode, Message: strings.TrimSpace(string(body))}
 }
 
 type rawPayload struct {
@@ -333,6 +345,9 @@ func decodeOCSResponse(r io.Reader, out any) error {
 	if err := json.NewDecoder(r).Decode(&wrapper); err != nil {
 		return err
 	}
+	if apiErr, ok := apiErrorFromOCSMeta(http.StatusOK, wrapper.OCS.Meta); ok {
+		return apiErr
+	}
 	if len(wrapper.OCS.Data) == 0 || string(wrapper.OCS.Data) == "null" {
 		return nil
 	}
@@ -340,6 +355,21 @@ func decodeOCSResponse(r io.Reader, out any) error {
 		return err
 	}
 	return nil
+}
+
+func apiErrorFromOCSMeta(fallbackStatusCode int, meta OCSMeta) (APIError, bool) {
+	status := strings.ToLower(strings.TrimSpace(meta.Status))
+	statusCode := meta.StatusCode
+	if statusCode == 0 {
+		statusCode = fallbackStatusCode
+	}
+	if status != "" && status != "ok" && status != "success" {
+		return APIError{StatusCode: statusCode, Message: meta.Message}, true
+	}
+	if meta.StatusCode >= http.StatusBadRequest {
+		return APIError{StatusCode: statusCode, Message: meta.Message}, true
+	}
+	return APIError{}, false
 }
 
 func stringPtr(v string) *string {
