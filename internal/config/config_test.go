@@ -30,3 +30,41 @@ func TestLoadFromEnvRequiresValues(t *testing.T) {
 		t.Fatal("expected error for missing env")
 	}
 }
+
+// --- Config edge cases ---
+
+func TestLoadFromEnv_AppPasswordFallback(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestLoadFromEnv_TrimWhitespace(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestNormalizeBaseURL_NoScheme(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestNormalizeBaseURL_TrailingSlash(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestNormalizeBaseURL_Empty(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestNormalizeBaseURL_WithPath(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestNormalizeBaseURL_HttpPreserved(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestPasswordFromEnv_PrefersNormal(t *testing.T) {
+	t.Skip("TODO: implement")
+}
+
+func TestPasswordFromEnv_FallsBackToApp(t *testing.T) {
+	t.Skip("TODO: implement")
+}
