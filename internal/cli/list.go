@@ -8,7 +8,7 @@ import (
 
 func runList(rt *runtime, args []string) error {
 	if len(args) == 0 {
-		return printLine(rt.stdout, "deck list list|get|archived|create|rename|reorder|delete")
+		return printLine(rt.stdout, "deck list list|get|find|archived|create|rename|reorder|delete")
 	}
 	switch args[0] {
 	case "list", "archived":
@@ -33,6 +33,21 @@ func runList(rt *runtime, args []string) error {
 			return err
 		}
 		return rt.printValue(stacks, nil)
+	case "find":
+		fs := newFlagSet("list find", rt.stderr)
+		boardID := fs.Int64("board", 0, "board id")
+		title := fs.String("title", "", "list title")
+		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0 && *title != "", "list find requires --board --title"); err != nil {
+			return err
+		}
+		stack, err := rt.client.FindStackByTitle(rt.ctx, *boardID, *title)
+		if err != nil {
+			return err
+		}
+		return rt.printValue(stack, nil)
 	case "get":
 		fs := newFlagSet("list get", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")

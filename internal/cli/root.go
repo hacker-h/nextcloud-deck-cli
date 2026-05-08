@@ -17,16 +17,22 @@ type commandHelp struct {
 
 var helpCommands = map[string]commandHelp{
 	"board": {
-		usage:              "deck board list|get|create|update|archive|unarchive|clone|export|import|delete|restore|import-systems|import-schema",
+		usage:              "deck board list|get|find|create|update|archive|unarchive|clone|export|import|delete|restore|import-systems|import-schema",
 		requiresSubcommand: true,
 		unknownLabel:       "board",
-		subcommands:        knownSubcommands("list", "get", "create", "update", "archive", "unarchive", "clone", "export", "import", "delete", "restore", "import-systems", "import-schema"),
+		subcommands: map[string]commandHelp{
+			"list": {}, "get": {}, "create": {}, "update": {}, "archive": {}, "unarchive": {}, "clone": {}, "export": {}, "import": {}, "delete": {}, "restore": {}, "import-systems": {}, "import-schema": {},
+			"find": {usage: "deck board find --title TEXT"},
+		},
 	},
 	"list": {
-		usage:              "deck list list|get|archived|create|rename|reorder|delete",
+		usage:              "deck list list|get|find|archived|create|rename|reorder|delete",
 		requiresSubcommand: true,
 		unknownLabel:       "list",
-		subcommands:        knownSubcommands("list", "get", "archived", "create", "rename", "reorder", "delete"),
+		subcommands: map[string]commandHelp{
+			"list": {}, "get": {}, "archived": {}, "create": {}, "rename": {}, "reorder": {}, "delete": {},
+			"find": {usage: "deck list find --board ID --title TEXT"},
+		},
 	},
 	"card": {
 		usage:              "deck card list|get|create|clone|delete|move|reorder|archive|unarchive|done|undone|rename|describe|due|assign-user|unassign-user|assign-label|remove-label",
@@ -81,10 +87,13 @@ var helpCommands = map[string]commandHelp{
 		subcommands:        knownSubcommands("list", "add", "check", "uncheck"),
 	},
 	"label": {
-		usage:              "deck label list|get|create|update|delete",
+		usage:              "deck label list|get|find|create|update|delete",
 		requiresSubcommand: true,
 		unknownLabel:       "label",
-		subcommands:        knownSubcommands("list", "get", "create", "update", "delete"),
+		subcommands: map[string]commandHelp{
+			"list": {}, "get": {}, "create": {}, "update": {}, "delete": {},
+			"find": {usage: "deck label find --board ID --title TEXT"},
+		},
 	},
 	"comment": {
 		usage:              "deck comment list|create|update|delete",
@@ -253,8 +262,8 @@ Output:
                          Output format. Defaults to text.
 
 Commands:
-  board      list|get|create|update|archive|unarchive|clone|export|import|delete|restore|import-systems|import-schema
-  list       list|get|archived|create|rename|reorder|delete
+  board      list|get|find|create|update|archive|unarchive|clone|export|import|delete|restore|import-systems|import-schema
+  list       list|get|find|archived|create|rename|reorder|delete
   card       list|get|create|clone|delete|move|reorder|archive|unarchive|done|undone|rename|describe|due|assign-user|unassign-user|assign-label|remove-label
   search     cards
   overview   upcoming
@@ -263,7 +272,7 @@ Commands:
   user       search|get
   activity   card
   todo       list|add|check|uncheck
-  label      list|get|create|update|delete
+  label      list|get|find|create|update|delete
   comment    list|create|update|delete
   attachment list|upload|download|delete|restore
   share      list|create|update|delete

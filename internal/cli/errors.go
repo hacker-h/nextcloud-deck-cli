@@ -85,6 +85,11 @@ func classifyError(err error) errorKind {
 		}
 	}
 
+	var lookupErr deck.LookupError
+	if errors.As(err, &lookupErr) {
+		return errorKindValidation
+	}
+
 	var urlErr *url.Error
 	if errors.As(err, &urlErr) {
 		return errorKindNetwork
