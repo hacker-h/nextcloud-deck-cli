@@ -1,0 +1,78 @@
+name: Live Integration
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      run_performance:
+        description: Run slower performance/import-export scenarios
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      run_full_backup:
+        description: Run the heavy 200-card backup/restore scenario
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-integration-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      NEXTCLOUD_BASE_URL: ${{ secrets.NEXTCLOUD_BASE_URL }}
+      NEXTCLOUD_USERNAME: ${{ secrets.NEXTCLOUD_USERNAME }}
+      NEXTCLOUD_PASSWORD: ${{ secrets.NEXTCLOUD_PASSWORD }}
+      NEXTCLOUD_APP_PASSWORD: ${{ secrets.NEXTCLOUD_APP_PASSWORD }}
+      DECK_TIMEOUT: 10m
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.24"
+          cache: false
+
+      - name: Verify live integration secrets
+        run: |
+          test -n "$NEXTCLOUD_BASE_URL"
+          test -n "$NEXTCLOUD_USERNAME"
+          if [ -z "$NEXTCLOUD_PASSWORD" ] && [ -z "$NEXTCLOUD_APP_PASSWORD" ]; then
+            echo "Set NEXTCLOUD_PASSWORD or NEXTCLOUD_APP_PASSWORD as a repository secret"
+            exit 1
+          fi
+
+      - name: Build CLI
+        run: go build ./cmd/deck
+
+      - name: Live client smoke
+        run: go test ./internal/deck -run TestIntegrationGetBoards -count=1 -v
+
+      - name: Live CLI feature flow
+        run: go test ./internal/cli -run TestCLIIntegrationDeckFlow -count=1 -timeout 20m -v
+
+      - name: Live performance scenarios
+        if: ${{ inputs.run_performance == 'true' }}
+        run: go test ./internal/deck -run 'TestPerformance(LargeBoard|BoardBackupImport)' -count=1 -timeout 30m -v
+
+      - name: Live full backup restore scenario
+        if: ${{ inputs.run_full_backup == 'true' }}
+        env:
+          NEXTCLOUD_FULL_BACKUP_SCENARIO: "1"
+        run: go test ./internal/deck -run TestBackupRestoreRichKanbanBoard -count=1 -timeout 40m -v
