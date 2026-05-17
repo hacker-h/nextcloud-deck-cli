@@ -6,6 +6,12 @@
 go test ./...
 ```
 
+Build the CLI locally:
+
+```bash
+go build ./cmd/deck
+```
+
 Timeout-sensitive slow runs can use the global timeout flag or environment variable:
 
 ```bash
@@ -21,6 +27,32 @@ source ./secrets.env
 set +a
 go test ./internal/cli -run TestCLIIntegrationDeckFlow -count=1 -v
 ```
+
+`secrets.env` is intentionally untracked. It should define:
+
+```bash
+NEXTCLOUD_BASE_URL=https://nextcloud.example.com
+NEXTCLOUD_USERNAME=example-user
+NEXTCLOUD_APP_PASSWORD=example-app-password
+DECK_TIMEOUT=10m
+```
+
+The low-cost live smoke checks are:
+
+```bash
+go test ./internal/deck -run TestIntegrationGetBoards -count=1 -v
+go test ./internal/cli -run TestCLIIntegrationDeckFlow -count=1 -timeout 20m -v
+```
+
+## CI Live Integration
+
+The `Live Integration` GitHub Actions workflow runs on pushes to `main`, on a weekly schedule, and manually through `workflow_dispatch`. It intentionally does not run on pull requests, so public PRs do not receive test-server secrets. Configure these repository secrets before running it:
+
+- `NEXTCLOUD_BASE_URL`
+- `NEXTCLOUD_USERNAME`
+- `NEXTCLOUD_APP_PASSWORD` or `NEXTCLOUD_PASSWORD`
+
+The workflow always builds the CLI, runs the live client smoke test, and runs the broad CLI feature flow. Server-version or permission-limited commands are logged and tracked in GitHub issues instead of blocking unrelated feature coverage. Optional manual inputs enable the slower performance/import-export and rich backup/restore scenarios.
 
 ## Performance
 

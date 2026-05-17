@@ -141,8 +141,7 @@ func TestPerformanceBoardBackupImport(t *testing.T) {
 			stackCount := 2
 			t.Logf("export board cards=%d stacks=%d: duration=%s size_bytes=%d size_per_card=%.1f", cardCount, stackCount, exportDuration, info.Size(), float64(info.Size())/float64(cardCount))
 			if err != nil {
-				t.Logf("import board cards=%d stacks=%d: duration=%s result=error error=%v", cardCount, stackCount, importDuration, err)
-				return
+				t.Fatalf("import board cards=%d stacks=%d: duration=%s error=%v", cardCount, stackCount, importDuration, err)
 			}
 			defer func() { _ = client.DeleteBoard(context.Background(), importedBoard.ID) }()
 
