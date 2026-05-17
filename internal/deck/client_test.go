@@ -589,6 +589,17 @@ func TestUpcomingCards(t *testing.T) {
 		t.Fatalf("cards=%#v err=%v", cards, err)
 	}
 }
+func TestUpcomingCardsGroupedResponse(t *testing.T) {
+	server := ocsRouteServer(t, http.MethodGet, "/ocs/v2.php/apps/deck/api/v1.0/overview/upcoming", "", map[string][]Card{
+		"nodue":   {{ID: 9}},
+		"overdue": {{ID: 10}},
+	})
+	defer server.Close()
+	cards, err := testClient(server.URL).UpcomingCards(context.Background())
+	if err != nil || len(cards) != 2 || cards[0].ID != 9 || cards[1].ID != 10 {
+		t.Fatalf("cards=%#v err=%v", cards, err)
+	}
+}
 func TestExportBoard(t *testing.T) {
 	out := t.TempDir() + "/board.json"
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

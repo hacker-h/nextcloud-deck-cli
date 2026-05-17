@@ -96,9 +96,35 @@ func (c *Client) CloseSession(ctx context.Context, boardID int64, token string) 
 }
 
 func (c *Client) UpcomingCards(ctx context.Context) ([]Card, error) {
+	var raw json.RawMessage
+	if err := c.doOCS(ctx, http.MethodGet, "/overview/upcoming", nil, &raw); err != nil {
+		return nil, err
+	}
+	return decodeUpcomingCards(raw)
+}
+
+func decodeUpcomingCards(raw json.RawMessage) ([]Card, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return nil, nil
+	}
 	var cards []Card
-	err := c.doOCS(ctx, http.MethodGet, "/overview/upcoming", nil, &cards)
-	return cards, err
+	if err := json.Unmarshal(raw, &cards); err == nil {
+		return cards, nil
+	}
+
+	var groups map[string][]Card
+	if err := json.Unmarshal(raw, &groups); err != nil {
+		return nil, err
+	}
+	keys := make([]string, 0, len(groups))
+	for key := range groups {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		cards = append(cards, groups[key]...)
+	}
+	return cards, nil
 }
 
 func (c *Client) SearchCards(ctx context.Context, term string, limit int) ([]Card, error) {
