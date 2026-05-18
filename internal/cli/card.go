@@ -8,7 +8,7 @@ import (
 
 func runCard(rt *runtime, args []string) error {
 	if len(args) == 0 {
-		return printLine(rt.stdout, "deck card list|get|create|clone|delete|move|reorder|archive|unarchive|done|undone|rename|describe|due|assign-user|unassign-user|assign-label|remove-label")
+		return printLine(rt.stdout, "deck card list|get|deleted|create|clone|delete|move|reorder|archive|unarchive|done|undone|rename|describe|update|due|assign-user|unassign-user|assign-label|remove-label|assign-dependent|remove-dependent")
 	}
 	switch args[0] {
 	case "list":
@@ -42,13 +42,30 @@ func runCard(rt *runtime, args []string) error {
 			return err
 		}
 		return rt.printValue(card, nil)
+	case "deleted":
+		fs := newFlagSet("card deleted", rt.stderr)
+		boardID := fs.Int64("board", 0, "board id")
+		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0, "card deleted requires --board"); err != nil {
+			return err
+		}
+		cards, err := rt.client.ListDeletedCards(rt.ctx, *boardID)
+		if err != nil {
+			return err
+		}
+		return rt.printValue(cards, nil)
 	case "create":
 		fs := newFlagSet("card create", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
 		stackID := fs.Int64("stack", 0, "stack id")
 		title := fs.String("title", "", "card title")
+		cardType := fs.String("type", "plain", "card type")
+		color := fs.String("color", "", "card color")
 		descriptionInput := addTextInputFlags(fs, "description", "description-file", "description-stdin", "card description", true)
 		due := fs.String("due", "", "ISO-8601 due date")
+		start := fs.String("start", "", "ISO-8601 start date")
 		order := fs.Int64("order", 999, "card order")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
@@ -60,12 +77,15 @@ func runCard(rt *runtime, args []string) error {
 		if err != nil {
 			return err
 		}
-		req := deck.CreateCardRequest{Title: *title, Type: "plain", Order: *order}
+		req := deck.CreateCardRequest{Title: *title, Type: *cardType, Color: *color, Order: *order}
 		if hasDescription {
 			req.Description = stringPtr(description)
 		}
 		if *due != "" {
 			req.Duedate = stringPtr(*due)
+		}
+		if *start != "" {
+			req.Startdate = stringPtr(*start)
 		}
 		card, err := rt.client.CreateCard(rt.ctx, *boardID, *stackID, req)
 		if err != nil {
@@ -179,12 +199,16 @@ func runCard(rt *runtime, args []string) error {
 			return err
 		}
 		return rt.printValue(card, nil)
-	case "rename", "describe":
+	case "rename", "describe", "update":
 		fs := newFlagSet("card update", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
 		stackID := fs.Int64("stack", 0, "stack id")
 		cardID := fs.Int64("card", 0, "card id")
 		title := fs.String("title", "", "card title")
+		cardType := fs.String("type", "", "card type")
+		color := fs.String("color", "", "card color")
+		due := fs.String("due", "", "ISO-8601 due date")
+		start := fs.String("start", "", "ISO-8601 start date")
 		descriptionInput := addTextInputFlags(fs, "description", "description-file", "description-stdin", "card description", true)
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
@@ -192,7 +216,7 @@ func runCard(rt *runtime, args []string) error {
 		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0, fmt.Sprintf("card %s requires --board --stack --card", args[0])); err != nil {
 			return err
 		}
-		description, _, err := descriptionInput.resolve(fs)
+		description, hasDescription, err := descriptionInput.resolve(fs)
 		if err != nil {
 			return err
 		}
@@ -207,7 +231,30 @@ func runCard(rt *runtime, args []string) error {
 			card.Title = *title
 		}
 		if args[0] == "describe" {
+			if err := require(hasDescription, "card describe requires --description, --description-file, or --description-stdin"); err != nil {
+				return err
+			}
 			card.Description = description
+		}
+		if args[0] == "update" {
+			if *title != "" {
+				card.Title = *title
+			}
+			if *cardType != "" {
+				card.Type = *cardType
+			}
+			if *color != "" {
+				card.Color = *color
+			}
+			if *due != "" {
+				card.Duedate = stringPtr(*due)
+			}
+			if *start != "" {
+				card.Startdate = stringPtr(*start)
+			}
+			if description != "" {
+				card.Description = description
+			}
 		}
 		updated, err := rt.client.UpdateCard(rt.ctx, *boardID, *stackID, *cardID, baseCardUpdate(card, card.Title, &card.Description, card.Duedate))
 		if err != nil {
@@ -261,6 +308,31 @@ func runCard(rt *runtime, args []string) error {
 			return err
 		}
 		return rt.printStatus("removed", map[string]any{"boardId": *boardID, "stackId": *stackID, "cardId": *cardID, "labelId": *labelID}, "removed label %d", *labelID)
+	case "assign-dependent", "remove-dependent":
+		fs := newFlagSet("card dependent", rt.stderr)
+		boardID := fs.Int64("board", 0, "board id")
+		stackID := fs.Int64("stack", 0, "stack id")
+		cardID := fs.Int64("card", 0, "card id")
+		dependentID := fs.Int64("dependent-card", 0, "dependent card id")
+		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0 && *dependentID != 0, fmt.Sprintf("card %s requires --board --stack --card --dependent-card", args[0])); err != nil {
+			return err
+		}
+		var (
+			card deck.Card
+			err  error
+		)
+		if args[0] == "assign-dependent" {
+			card, err = rt.client.AssignDependentCard(rt.ctx, *boardID, *stackID, *cardID, *dependentID)
+		} else {
+			card, err = rt.client.RemoveDependentCard(rt.ctx, *boardID, *stackID, *cardID, *dependentID)
+		}
+		if err != nil {
+			return err
+		}
+		return rt.printValue(card, nil)
 	default:
 		return fmt.Errorf("unknown card command %q", args[0])
 	}

@@ -8,7 +8,7 @@ import (
 
 func runList(rt *runtime, args []string) error {
 	if len(args) == 0 {
-		return printLine(rt.stdout, "deck list list|get|find|archived|create|rename|reorder|delete")
+		return printLine(rt.stdout, "deck list list|get|find|archived|create|rename|reorder|done|undone|delete")
 	}
 	switch args[0] {
 	case "list", "archived":
@@ -112,6 +112,20 @@ func runList(rt *runtime, args []string) error {
 			return err
 		}
 		return rt.printValue(updated, nil)
+	case "done", "undone":
+		fs := newFlagSet("list done", rt.stderr)
+		boardID := fs.Int64("board", 0, "board id")
+		listID := fs.Int64("list", 0, "list id")
+		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0 && *listID != 0, fmt.Sprintf("list %s requires --board --list", args[0])); err != nil {
+			return err
+		}
+		if err := rt.client.SetStackDone(rt.ctx, *boardID, *listID, args[0] == "done"); err != nil {
+			return err
+		}
+		return rt.printStatus(args[0], map[string]any{"boardId": *boardID, "listId": *listID}, "marked list %d %s", *listID, args[0])
 	case "delete":
 		fs := newFlagSet("list delete", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")

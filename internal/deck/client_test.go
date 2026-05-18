@@ -984,3 +984,149 @@ func writeClientFile(t *testing.T, path, contents string) {
 		t.Fatalf("write file: %v", err)
 	}
 }
+
+// --- New board methods ---
+
+func TestGetBoardPermissions(t *testing.T) {
+	server := jsonRouteServer(t, http.MethodGet, "/index.php/apps/deck/boards/7/permissions", map[string]bool{"PERMISSION_READ": true, "PERMISSION_EDIT": false})
+	defer server.Close()
+	perms, err := testClient(server.URL).GetBoardPermissions(context.Background(), 7)
+	if err != nil || !perms["PERMISSION_READ"] || perms["PERMISSION_EDIT"] {
+		t.Fatalf("perms=%#v err=%v", perms, err)
+	}
+}
+
+func TestLeaveBoard(t *testing.T) {
+	assertNoContentCall(t, http.MethodPost, "/index.php/apps/deck/boards/7/leave", func(c *Client) error { return c.LeaveBoard(context.Background(), 7) })
+}
+
+func TestTransferBoardOwner(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assertRequest(t, r, http.MethodPut, "/index.php/apps/deck/boards/7/transferOwner")
+		var payload map[string]string
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		if payload["newOwner"] != "bob" {
+			t.Fatalf("payload=%#v", payload)
+		}
+		writeJSON(w, map[string]any{"status": "ok"})
+	}))
+	defer server.Close()
+	result, err := testClient(server.URL).TransferBoardOwner(context.Background(), 7, "bob")
+	if err != nil || result["status"] != "ok" {
+		t.Fatalf("result=%#v err=%v", result, err)
+	}
+}
+
+// --- SetStackDone ---
+
+func TestSetStackDone(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assertRequest(t, r, http.MethodPut, "/ocs/v2.php/apps/deck/api/v1.0/stacks/2/done")
+		var payload SetStackDoneRequest
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		if payload.BoardID != 7 || !payload.IsDone {
+			t.Fatalf("payload=%#v", payload)
+		}
+		writeOCS(w, OCSMeta{Status: "ok", StatusCode: 200}, nil)
+	}))
+	defer server.Close()
+	if err := testClient(server.URL).SetStackDone(context.Background(), 7, 2, true); err != nil {
+		t.Fatalf("SetStackDone() error = %v", err)
+	}
+}
+
+// --- ListDeletedCards ---
+
+func TestListDeletedCards(t *testing.T) {
+	server := jsonRouteServer(t, http.MethodGet, "/index.php/apps/deck/boards/7/cards/deleted", []Card{{ID: 9, Title: "Deleted"}})
+	defer server.Close()
+	cards, err := testClient(server.URL).ListDeletedCards(context.Background(), 7)
+	if err != nil || len(cards) != 1 || cards[0].ID != 9 {
+		t.Fatalf("cards=%#v err=%v", cards, err)
+	}
+}
+
+// --- AssignDependentCard / RemoveDependentCard ---
+
+func TestAssignDependentCard(t *testing.T) {
+	assertCardResult(t, callJSONCard(t, http.MethodPost, "/index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9/dependentCards/11", func(c *Client) (Card, error) {
+		return c.AssignDependentCard(context.Background(), 7, 2, 9, 11)
+	}))
+}
+
+func TestRemoveDependentCard(t *testing.T) {
+	assertCardResult(t, callJSONCard(t, http.MethodDelete, "/index.php/apps/deck/api/v1.0/boards/7/stacks/2/cards/9/dependentCards/11", func(c *Client) (Card, error) {
+		return c.RemoveDependentCard(context.Background(), 7, 2, 9, 11)
+	}))
+}
+
+// --- CreateCommentWithReply ---
+
+func TestCreateCommentWithReply(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assertRequest(t, r, http.MethodPost, "/ocs/v2.php/apps/deck/api/v1.0/cards/9/comments")
+		var payload CreateCommentRequest
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode body: %v", err)
+		}
+		if payload.Message != "reply" || payload.ReplyTo != 6 {
+			t.Fatalf("payload=%#v", payload)
+		}
+		writeOCS(w, OCSMeta{Status: "ok", StatusCode: 200}, Comment{ID: 7, Message: "reply"})
+	}))
+	defer server.Close()
+	comment, err := testClient(server.URL).CreateCommentWithReply(context.Background(), 9, "reply", 6)
+	if err != nil || comment.ID != 7 {
+		t.Fatalf("comment=%#v err=%v", comment, err)
+	}
+}
+
+// --- Typed attachment refs ---
+
+func TestDeleteAttachmentRef(t *testing.T) {
+	assertOCSNoContentCall(t, http.MethodDelete, "/ocs/v2.php/apps/deck/api/v1.0/cards/9/attachments/deck_file:8", func(c *Client) error {
+		return c.DeleteAttachmentRef(context.Background(), 9, "deck_file:8")
+	})
+}
+
+func TestRestoreAttachmentRef(t *testing.T) {
+	server := ocsRouteServer(t, http.MethodPut, "/ocs/v2.php/apps/deck/api/v1.0/cards/9/attachments/deck_file:8/restore", "", Attachment{ID: 8})
+	defer server.Close()
+	var out Attachment
+	err := testClient(server.URL).RestoreAttachmentRef(context.Background(), 9, "deck_file:8", &out)
+	if err != nil || out.ID != 8 {
+		t.Fatalf("out=%#v err=%v", out, err)
+	}
+}
+
+// --- SearchCardsCursor ---
+
+func TestSearchCardsCursor(t *testing.T) {
+	cards, err := callOCSCards(t, http.MethodGet, "/ocs/v2.php/apps/deck/api/v1.0/search", "term=hello&limit=5&cursor=42", func(c *Client) ([]Card, error) {
+		return c.SearchCardsCursor(context.Background(), "hello", 5, 42)
+	})
+	if err != nil || len(cards) != 1 {
+		t.Fatalf("cards=%#v err=%v", cards, err)
+	}
+}
+
+// --- GetActivity ---
+
+func TestGetActivity(t *testing.T) {
+	activities, err := callOCSActivities(t, http.MethodGet, "/ocs/v2.php/apps/activity/api/v2/activity/filter", "format=json&limit=10&object_id=9&object_type=deck_card&since=5&sort=desc", func(c *Client) ([]Activity, error) {
+		return c.GetActivity(context.Background(), ActivityQuery{
+			ObjectType: "deck_card",
+			ObjectID:   9,
+			Limit:      10,
+			Since:      5,
+			Sort:       "desc",
+		})
+	})
+	if err != nil || len(activities) != 1 {
+		t.Fatalf("activities=%#v err=%v", activities, err)
+	}
+}

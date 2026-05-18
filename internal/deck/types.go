@@ -20,6 +20,7 @@ type Stack struct {
 	Title        string `json:"title"`
 	BoardID      int64  `json:"boardId"`
 	Order        int64  `json:"order"`
+	IsDoneColumn bool   `json:"isDoneColumn,omitempty"`
 	DeletedAt    int64  `json:"deletedAt,omitempty"`
 	LastModified int64  `json:"lastModified,omitempty"`
 	Cards        []Card `json:"cards,omitempty"`
@@ -32,9 +33,13 @@ type Card struct {
 	Description     string       `json:"description"`
 	StackID         int64        `json:"stackId"`
 	Type            string       `json:"type,omitempty"`
+	Color           string       `json:"color,omitempty"`
 	Order           int64        `json:"order"`
 	Archived        bool         `json:"archived"`
 	Duedate         *string      `json:"duedate"`
+	Startdate       *string      `json:"startdate,omitempty"`
+	Done            *string      `json:"done,omitempty"`
+	BoardID         int64        `json:"boardId,omitempty"`
 	DeletedAt       int64        `json:"deletedAt,omitempty"`
 	LastModified    int64        `json:"lastModified,omitempty"`
 	CreatedAt       int64        `json:"createdAt,omitempty"`
@@ -46,6 +51,10 @@ type Card struct {
 	AttachmentCount int          `json:"attachmentCount,omitempty"`
 	Owner           any          `json:"owner,omitempty"`
 	CommentsUnread  int          `json:"commentsUnread,omitempty"`
+	CommentsCount   int          `json:"commentsCount,omitempty"`
+	DependentCards  []int64      `json:"dependentCards,omitempty"`
+	RelatedBoard    any          `json:"relatedBoard,omitempty"`
+	RelatedStack    any          `json:"relatedStack,omitempty"`
 }
 
 type Label struct {
@@ -183,19 +192,29 @@ type UpdateACLRuleRequest struct {
 type CreateCardRequest struct {
 	Title       string  `json:"title"`
 	Type        string  `json:"type,omitempty"`
+	Color       string  `json:"color,omitempty"`
 	Order       int64   `json:"order,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Duedate     *string `json:"duedate,omitempty"`
+	Startdate   *string `json:"startdate,omitempty"`
 }
 
 type UpdateCardRequest struct {
 	Title       string  `json:"title,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Type        string  `json:"type,omitempty"`
+	Color       string  `json:"color,omitempty"`
 	Order       *int64  `json:"order,omitempty"`
 	Duedate     *string `json:"duedate"`
+	Startdate   *string `json:"startdate,omitempty"`
+	Done        *string `json:"done,omitempty"`
 	Archived    *bool   `json:"archived,omitempty"`
 	Owner       any     `json:"owner,omitempty"`
+}
+
+type SetStackDoneRequest struct {
+	BoardID int64 `json:"boardId"`
+	IsDone  bool  `json:"isDone"`
 }
 
 type ReorderCardRequest struct {
@@ -233,6 +252,7 @@ type AssignUserRequest struct {
 
 type CreateCommentRequest struct {
 	Message string `json:"message"`
+	ReplyTo int64  `json:"replyTo,omitempty"`
 }
 
 type UpdateCommentRequest struct {

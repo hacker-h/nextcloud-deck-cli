@@ -18,29 +18,29 @@ type commandHelp struct {
 
 var helpCommands = map[string]commandHelp{
 	"board": {
-		usage:              "deck board list|get|find|create|update|archive|unarchive|clone|export|import|delete|restore|import-systems|import-schema",
+		usage:              "deck board list|get|find|create|update|archive|unarchive|clone|export|import|import-server|delete|restore|import-systems|import-schema",
 		requiresSubcommand: true,
 		unknownLabel:       "board",
 		subcommands: map[string]commandHelp{
-			"list": {}, "get": {}, "create": {}, "update": {}, "archive": {}, "unarchive": {}, "clone": {}, "export": {}, "import": {}, "delete": {}, "restore": {}, "import-systems": {}, "import-schema": {},
+			"list": {}, "get": {}, "create": {}, "update": {}, "archive": {}, "unarchive": {}, "clone": {}, "export": {}, "import": {}, "import-server": {}, "delete": {}, "restore": {}, "import-systems": {}, "import-schema": {},
 			"find": {usage: "deck board find --title TEXT"},
 		},
 	},
 	"list": {
-		usage:              "deck list list|get|find|archived|create|rename|reorder|delete",
+		usage:              "deck list list|get|find|archived|create|rename|reorder|done|undone|delete",
 		requiresSubcommand: true,
 		unknownLabel:       "list",
 		subcommands: map[string]commandHelp{
-			"list": {}, "get": {}, "archived": {}, "create": {}, "rename": {}, "reorder": {}, "delete": {},
+			"list": {}, "get": {}, "archived": {}, "create": {}, "rename": {}, "reorder": {}, "done": {}, "undone": {}, "delete": {},
 			"find": {usage: "deck list find --board ID --title TEXT"},
 		},
 	},
 	"card": {
-		usage:              "deck card list|get|create|clone|delete|move|reorder|archive|unarchive|done|undone|rename|describe|due|assign-user|unassign-user|assign-label|remove-label",
+		usage:              "deck card list|get|deleted|create|clone|delete|move|reorder|archive|unarchive|done|undone|rename|describe|update|due|assign-user|unassign-user|assign-label|remove-label|assign-dependent|remove-dependent",
 		requiresSubcommand: true,
 		unknownLabel:       "card",
 		subcommands: map[string]commandHelp{
-			"list": {}, "get": {}, "create": {}, "clone": {}, "delete": {}, "move": {}, "reorder": {}, "archive": {}, "unarchive": {}, "done": {}, "undone": {}, "rename": {}, "describe": {}, "assign-user": {}, "unassign-user": {}, "assign-label": {}, "remove-label": {},
+			"list": {}, "get": {}, "deleted": {}, "create": {}, "clone": {}, "delete": {}, "move": {}, "reorder": {}, "archive": {}, "unarchive": {}, "done": {}, "undone": {}, "rename": {}, "describe": {}, "update": {}, "assign-user": {}, "unassign-user": {}, "assign-label": {}, "remove-label": {}, "assign-dependent": {}, "remove-dependent": {},
 			"due": {
 				usage:              "deck card due get|set|clear",
 				requiresSubcommand: true,
@@ -76,10 +76,10 @@ var helpCommands = map[string]commandHelp{
 		subcommands:        knownSubcommands("search", "get"),
 	},
 	"activity": {
-		usage:              "deck activity card",
+		usage:              "deck activity list|card",
 		requiresSubcommand: true,
 		unknownLabel:       "activity",
-		subcommands:        knownSubcommands("card"),
+		subcommands:        knownSubcommands("list", "card"),
 	},
 	"todo": {
 		usage:              "deck todo list|add|check|uncheck",
@@ -109,10 +109,10 @@ var helpCommands = map[string]commandHelp{
 		subcommands:        knownSubcommands("list", "upload", "download", "delete", "restore"),
 	},
 	"share": {
-		usage:              "deck share list|create|update|delete",
+		usage:              "deck share list|permissions|create|update|delete|leave|transfer-owner",
 		requiresSubcommand: true,
 		unknownLabel:       "share",
-		subcommands:        knownSubcommands("list", "create", "update", "delete"),
+		subcommands:        knownSubcommands("list", "permissions", "create", "update", "delete", "leave", "transfer-owner"),
 	},
 	"config": {
 		usage:              "deck config get|set",
@@ -268,20 +268,20 @@ Timeout:
   --timeout DURATION      Request timeout. Defaults to 90s or DECK_TIMEOUT.
 
 Commands:
-  board      list|get|find|create|update|archive|unarchive|clone|export|import|delete|restore|import-systems|import-schema
-  list       list|get|find|archived|create|rename|reorder|delete
-  card       list|get|create|clone|delete|move|reorder|archive|unarchive|done|undone|rename|describe|due|assign-user|unassign-user|assign-label|remove-label
+  board      list|get|find|create|update|archive|unarchive|clone|export|import|import-server|delete|restore|import-systems|import-schema
+  list       list|get|find|archived|create|rename|reorder|done|undone|delete
+  card       list|get|deleted|create|clone|delete|move|reorder|archive|unarchive|done|undone|rename|describe|update|due|assign-user|unassign-user|assign-label|remove-label|assign-dependent|remove-dependent
   search     cards
   overview   upcoming
   session    create|sync|close
   capabilities
   user       search|get
-  activity   card
+  activity   list|card
   todo       list|add|check|uncheck
   label      list|get|find|create|update|delete
   comment    list|create|update|delete
   attachment list|upload|download|delete|restore
-  share      list|create|update|delete
+  share      list|permissions|create|update|delete|leave|transfer-owner
   config     get|set
 `)+"\n")
 }

@@ -11,13 +11,14 @@ func runSearch(rt *runtime, args []string) error {
 		fs := newFlagSet("search cards", rt.stderr)
 		term := fs.String("term", "", "search term")
 		limit := fs.Int("limit", 20, "result limit")
+		cursor := fs.Int("cursor", 0, "pagination cursor")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
 		if err := require(*term != "", "search cards requires --term"); err != nil {
 			return err
 		}
-		cards, err := rt.client.SearchCards(rt.ctx, *term, *limit)
+		cards, err := rt.client.SearchCardsCursor(rt.ctx, *term, *limit, *cursor)
 		if err != nil {
 			return err
 		}

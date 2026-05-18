@@ -204,10 +204,36 @@ func TestCLIIntegrationDeckFlow(t *testing.T) {
 	if len(searchResults) == 0 {
 		t.Fatal("expected search results")
 	}
+	_ = runJSON[[]deck.Card](t, "search", "cards", "--term", cardTitle+"-renamed", "--limit", "5")
 	_ = runJSON[map[string]any](t, "user", "search", "--term", userID)
 	_ = runJSON[map[string]any](t, "user", "get", "--user", userID)
 	_ = runJSON[[]deck.Activity](t, "activity", "card", "--card", fmt.Sprint(cardID))
+	_ = runJSON[[]deck.Activity](t, "activity", "list", "--object-type", "deck_card", "--object-id", fmt.Sprint(cardID), "--limit", "10", "--sort", "desc")
 	_ = runJSON[[]deck.Card](t, "overview", "upcoming")
+
+	_ = runMaybe(t, "list", "done", "--board", fmt.Sprint(boardID), "--list", fmt.Sprint(stack1.ID))
+	_ = runMaybe(t, "list", "undone", "--board", fmt.Sprint(boardID), "--list", fmt.Sprint(stack1.ID))
+
+	if _, err := runMaybeJSON[map[string]bool](t, "share", "permissions", "--board", fmt.Sprint(boardID)); err != nil {
+		t.Logf("share permissions unavailable on this server: %v", err)
+	}
+
+	dep := runJSON[deck.Card](t, "card", "create", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack2.ID), "--title", cardTitle+"-dep")
+	depID := dep.ID
+	_ = runMaybe(t, "card", "assign-dependent", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack2.ID), "--card", fmt.Sprint(cardID), "--dependent-card", fmt.Sprint(depID))
+	_ = runMaybe(t, "card", "remove-dependent", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack2.ID), "--card", fmt.Sprint(cardID), "--dependent-card", fmt.Sprint(depID))
+	_ = runMaybe(t, "card", "delete", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack2.ID), "--card", fmt.Sprint(depID))
+
+	replyComment := runJSON[deck.Comment](t, "comment", "create", "--card", fmt.Sprint(cardID), "--message", "base comment")
+	_ = runMaybe(t, "comment", "create", "--card", fmt.Sprint(cardID), "--message", "reply", "--reply-to", fmt.Sprint(replyComment.ID))
+	runOK(t, "comment", "delete", "--card", fmt.Sprint(cardID), "--comment", fmt.Sprint(replyComment.ID))
+
+	deletedCards := runJSON[[]deck.Card](t, "card", "deleted", "--board", fmt.Sprint(boardID))
+	_ = deletedCards
+
+	if _, err := runMaybeJSON[map[string]any](t, "board", "import-server", "--system", "DeckJson", "--data-file", exportPath); err != nil {
+		t.Logf("import-server unavailable on this server: %v", err)
+	}
 	clonedBoard := runJSON[deck.Board](t, "board", "clone", "--board", fmt.Sprint(boardID), "--with-cards", "true", "--with-labels", "true", "--with-due-date", "true")
 	if clonedBoard.ID == 0 {
 		t.Fatal("expected cloned board id")

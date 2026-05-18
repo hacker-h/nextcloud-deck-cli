@@ -24,6 +24,7 @@ func runComment(rt *runtime, args []string) error {
 	case "create":
 		fs := newFlagSet("comment create", rt.stderr)
 		cardID := fs.Int64("card", 0, "card id")
+		replyTo := fs.Int64("reply-to", 0, "parent comment id")
 		messageInput := addTextInputFlags(fs, "message", "comment-file", "comment-stdin", "comment message", true)
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
@@ -38,7 +39,7 @@ func runComment(rt *runtime, args []string) error {
 		if err := require(hasMessage && message != "", "comment create requires --card --message"); err != nil {
 			return err
 		}
-		comment, err := rt.client.CreateComment(rt.ctx, *cardID, message)
+		comment, err := rt.client.CreateCommentWithReply(rt.ctx, *cardID, message, *replyTo)
 		if err != nil {
 			return err
 		}

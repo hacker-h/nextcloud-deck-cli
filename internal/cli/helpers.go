@@ -22,6 +22,15 @@ func cardSummary(card deck.Card) map[string]any {
 	if card.Duedate != nil {
 		result["dueDate"] = *card.Duedate
 	}
+	if card.Startdate != nil {
+		result["startDate"] = *card.Startdate
+	}
+	if card.Type != "" {
+		result["type"] = card.Type
+	}
+	if card.Color != "" {
+		result["color"] = card.Color
+	}
 	return result
 }
 
@@ -41,8 +50,11 @@ func baseCardUpdate(card deck.Card, title string, description *string, due *stri
 		Title:       title,
 		Description: description,
 		Type:        first(card.Type, "plain"),
+		Color:       card.Color,
 		Order:       int64Ptr(card.Order),
 		Duedate:     due,
+		Startdate:   card.Startdate,
+		Done:        card.Done,
 		Owner:       card.Owner,
 	}
 }
