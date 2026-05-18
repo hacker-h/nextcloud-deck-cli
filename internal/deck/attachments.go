@@ -3,6 +3,7 @@ package deck
 import (
 	"context"
 	"fmt"
+	"net/url"
 )
 
 func (c *Client) ListAttachments(ctx context.Context, boardID, stackID, cardID int64) ([]Attachment, error) {
@@ -41,6 +42,19 @@ func (c *Client) DownloadAttachment(ctx context.Context, boardID, stackID, cardI
 		return err
 	}
 	return c.DownloadAppFile(ctx, fmt.Sprintf("/cards/%d/attachment/%s", cardID, ref), outPath)
+}
+
+func (c *Client) DeleteAttachmentRef(ctx context.Context, cardID int64, ref string) error {
+	var ignored any
+	return c.doOCS(ctx, "DELETE", fmt.Sprintf("/cards/%d/attachments/%s", cardID, url.PathEscape(ref)), nil, &ignored)
+}
+
+func (c *Client) RestoreAttachmentRef(ctx context.Context, cardID int64, ref string, out *Attachment) error {
+	return c.doOCS(ctx, "PUT", fmt.Sprintf("/cards/%d/attachments/%s/restore", cardID, url.PathEscape(ref)), nil, out)
+}
+
+func (c *Client) DownloadAttachmentRef(ctx context.Context, cardID int64, ref, outPath string) error {
+	return c.DownloadAppFile(ctx, fmt.Sprintf("/cards/%d/attachment/%s", cardID, url.PathEscape(ref)), outPath)
 }
 
 func (c *Client) attachmentRef(ctx context.Context, boardID, stackID, cardID, attachmentID int64) (string, error) {

@@ -81,3 +81,19 @@ func (c *Client) UpdateShare(ctx context.Context, boardID, aclID int64, req Upda
 func (c *Client) DeleteShare(ctx context.Context, boardID, aclID int64) error {
 	return c.doJSON(ctx, http.MethodDelete, fmt.Sprintf("/boards/%d/acl/%d", boardID, aclID), nil, nil)
 }
+
+func (c *Client) GetBoardPermissions(ctx context.Context, boardID int64) (map[string]bool, error) {
+	permissions := map[string]bool{}
+	err := c.doAppJSON(ctx, http.MethodGet, fmt.Sprintf("/boards/%d/permissions", boardID), nil, &permissions)
+	return permissions, err
+}
+
+func (c *Client) LeaveBoard(ctx context.Context, boardID int64) error {
+	return c.doAppJSON(ctx, http.MethodPost, fmt.Sprintf("/boards/%d/leave", boardID), nil, nil)
+}
+
+func (c *Client) TransferBoardOwner(ctx context.Context, boardID int64, newOwner string) (map[string]any, error) {
+	result := map[string]any{}
+	err := c.doAppJSON(ctx, http.MethodPut, fmt.Sprintf("/boards/%d/transferOwner", boardID), map[string]string{"newOwner": newOwner}, &result)
+	return result, err
+}

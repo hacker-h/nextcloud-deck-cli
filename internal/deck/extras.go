@@ -128,9 +128,16 @@ func decodeUpcomingCards(raw json.RawMessage) ([]Card, error) {
 }
 
 func (c *Client) SearchCards(ctx context.Context, term string, limit int) ([]Card, error) {
+	return c.SearchCardsCursor(ctx, term, limit, 0)
+}
+
+func (c *Client) SearchCardsCursor(ctx context.Context, term string, limit int, cursor int) ([]Card, error) {
 	endpoint := fmt.Sprintf("/search?term=%s", url.QueryEscape(term))
 	if limit > 0 {
 		endpoint += fmt.Sprintf("&limit=%d", limit)
+	}
+	if cursor > 0 {
+		endpoint += fmt.Sprintf("&cursor=%d", cursor)
 	}
 	var cards []Card
 	err := c.doOCS(ctx, http.MethodGet, endpoint, nil, &cards)
@@ -204,6 +211,8 @@ func (c *Client) ImportExportedBoard(ctx context.Context, payload map[string]any
 		return Board{}, err
 	}
 	labelMap := map[int64]int64{}
+	cardMap := map[int64]int64{}
+	deferredCards := []map[string]any{}
 	labels := asMapSlice(payload["labels"])
 	for i, labelData := range labels {
 		if i < len(board.Labels) {
@@ -228,17 +237,57 @@ func (c *Client) ImportExportedBoard(ctx context.Context, payload map[string]any
 		for _, cardData := range cards {
 			description := toString(cardData["description"])
 			due := nullableString(cardData["duedate"])
-			card, err := c.CreateCard(ctx, board.ID, stack.ID, CreateCardRequest{Title: toString(cardData["title"]), Type: firstString(toString(cardData["type"]), "plain"), Order: toInt64(cardData["order"]), Description: &description, Duedate: due})
+			start := nullableString(cardData["startdate"])
+			card, err := c.CreateCard(ctx, board.ID, stack.ID, CreateCardRequest{Title: toString(cardData["title"]), Type: firstString(toString(cardData["type"]), "plain"), Color: toString(cardData["color"]), Order: toInt64(cardData["order"]), Description: &description, Duedate: due, Startdate: start})
 			if err != nil {
 				continue
 			}
+			oldCardID := toInt64(cardData["id"])
+			if oldCardID != 0 {
+				cardMap[oldCardID] = card.ID
+			}
+			cardData["__newCardID"] = card.ID
+			cardData["__newStackID"] = stack.ID
+			deferredCards = append(deferredCards, cardData)
 			for _, labelData := range asMapSlice(cardData["labels"]) {
 				oldID := toInt64(labelData["id"])
 				if newID, ok := labelMap[oldID]; ok {
 					_ = c.AssignLabel(ctx, board.ID, stack.ID, card.ID, newID)
 				}
 			}
+			for _, assignmentData := range asMapSlice(cardData["assignedUsers"]) {
+				if userID := assignmentUserID(assignmentData); userID != "" {
+					_, _ = c.AssignUser(ctx, board.ID, stack.ID, card.ID, userID)
+				}
+			}
+			if cardData["done"] != nil {
+				_, _ = c.MarkCardDone(ctx, card.ID)
+			}
+			for _, commentData := range asMapSlice(cardData["comments"]) {
+				if message := toString(commentData["message"]); message != "" {
+					_, _ = c.CreateComment(ctx, card.ID, message)
+				}
+			}
 		}
+	}
+	for _, cardData := range deferredCards {
+		cardID := toInt64(cardData["__newCardID"])
+		stackID := toInt64(cardData["__newStackID"])
+		for _, oldDependentID := range int64Slice(cardData["dependentCards"]) {
+			if newDependentID, ok := cardMap[oldDependentID]; ok {
+				_, _ = c.AssignDependentCard(ctx, board.ID, stackID, cardID, newDependentID)
+			}
+		}
+	}
+	for _, aclData := range asMapSlice(payload["acl"]) {
+		if isTruthy(aclData["owner"]) {
+			continue
+		}
+		participant := participantID(aclData["participant"])
+		if participant == "" {
+			continue
+		}
+		_, _ = c.CreateShare(ctx, board.ID, CreateACLRuleRequest{Type: int(toInt64(aclData["type"])), Participant: participant, PermissionEdit: isTruthy(aclData["permissionEdit"]), PermissionShare: isTruthy(aclData["permissionShare"]), PermissionManage: isTruthy(aclData["permissionManage"])})
 	}
 	return c.GetBoard(ctx, board.ID)
 }
@@ -301,4 +350,48 @@ func (c *Client) doReadCardByID(ctx context.Context, cardID int64) (Card, error)
 	var card Card
 	err := c.doAppJSON(ctx, http.MethodGet, fmt.Sprintf("/cards/%d", cardID), nil, &card)
 	return card, err
+}
+
+func int64Slice(value any) []int64 {
+	raw, ok := value.([]any)
+	if !ok {
+		return nil
+	}
+	ids := make([]int64, 0, len(raw))
+	for _, item := range raw {
+		ids = append(ids, toInt64(item))
+	}
+	return ids
+}
+
+func assignmentUserID(data map[string]any) string {
+	return participantID(data["participant"])
+}
+
+func participantID(value any) string {
+	participant, ok := value.(map[string]any)
+	if !ok {
+		return toString(value)
+	}
+	for _, key := range []string{"uid", "primaryKey", "id"} {
+		if value := toString(participant[key]); value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func isTruthy(value any) bool {
+	switch v := value.(type) {
+	case bool:
+		return v
+	case float64:
+		return v != 0
+	case int:
+		return v != 0
+	case string:
+		return v == "true" || v == "1"
+	default:
+		return false
+	}
 }

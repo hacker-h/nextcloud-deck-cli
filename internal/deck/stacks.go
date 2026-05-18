@@ -41,3 +41,8 @@ func (c *Client) GetArchivedStacks(ctx context.Context, boardID int64) ([]Stack,
 func (c *Client) DeleteStack(ctx context.Context, boardID, stackID int64) error {
 	return c.doJSON(ctx, http.MethodDelete, fmt.Sprintf("/boards/%d/stacks/%d", boardID, stackID), nil, nil)
 }
+
+func (c *Client) SetStackDone(ctx context.Context, boardID, stackID int64, isDone bool) error {
+	var ignored any
+	return c.doOCS(ctx, http.MethodPut, fmt.Sprintf("/stacks/%d/done", stackID), SetStackDoneRequest{BoardID: boardID, IsDone: isDone}, &ignored)
+}

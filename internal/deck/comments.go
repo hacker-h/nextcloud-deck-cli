@@ -13,8 +13,12 @@ func (c *Client) ListComments(ctx context.Context, cardID int64) ([]Comment, err
 }
 
 func (c *Client) CreateComment(ctx context.Context, cardID int64, message string) (Comment, error) {
+	return c.CreateCommentWithReply(ctx, cardID, message, 0)
+}
+
+func (c *Client) CreateCommentWithReply(ctx context.Context, cardID int64, message string, replyTo int64) (Comment, error) {
 	var comment Comment
-	err := c.doOCS(ctx, http.MethodPost, fmt.Sprintf("/cards/%d/comments", cardID), CreateCommentRequest{Message: message}, &comment)
+	err := c.doOCS(ctx, http.MethodPost, fmt.Sprintf("/cards/%d/comments", cardID), CreateCommentRequest{Message: message, ReplyTo: replyTo}, &comment)
 	return comment, err
 }
 

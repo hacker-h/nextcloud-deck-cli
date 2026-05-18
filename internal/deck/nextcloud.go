@@ -33,6 +33,37 @@ func (c *Client) GetCardActivity(ctx context.Context, cardID int64) ([]Activity,
 	return data, err
 }
 
+type ActivityQuery struct {
+	ObjectType string
+	ObjectID   int64
+	Limit      int
+	Since      int64
+	Sort       string
+}
+
+func (c *Client) GetActivity(ctx context.Context, query ActivityQuery) ([]Activity, error) {
+	var data []Activity
+	values := url.Values{"format": {"json"}}
+	if query.ObjectType != "" {
+		values.Set("object_type", query.ObjectType)
+	}
+	if query.ObjectID != 0 {
+		values.Set("object_id", fmt.Sprint(query.ObjectID))
+	}
+	if query.Limit > 0 {
+		values.Set("limit", fmt.Sprint(query.Limit))
+	}
+	if query.Since != 0 {
+		values.Set("since", fmt.Sprint(query.Since))
+	}
+	if query.Sort != "" {
+		values.Set("sort", query.Sort)
+	}
+	endpoint := "/apps/activity/api/v2/activity/filter?" + values.Encode()
+	err := c.do(ctx, http.MethodGet, c.nextcloudOCSURL(endpoint), nil, &data, true, nil)
+	return data, err
+}
+
 func (c *Client) nextcloudOCSURL(endpoint string) string {
 	u, _ := url.Parse(c.baseURL)
 	endpointURL, _ := url.Parse(endpoint)

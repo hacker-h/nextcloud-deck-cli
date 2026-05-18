@@ -14,6 +14,12 @@ func (c *Client) ListCards(ctx context.Context, boardID, stackID int64) ([]Card,
 	return stack.Cards, nil
 }
 
+func (c *Client) ListDeletedCards(ctx context.Context, boardID int64) ([]Card, error) {
+	var cards []Card
+	err := c.doAppJSON(ctx, http.MethodGet, fmt.Sprintf("/%d/cards/deleted", boardID), nil, &cards)
+	return cards, err
+}
+
 func (c *Client) AssignLabel(ctx context.Context, boardID, stackID, cardID, labelID int64) error {
 	return c.doJSON(ctx, http.MethodPut, fmt.Sprintf("/boards/%d/stacks/%d/cards/%d/assignLabel", boardID, stackID, cardID), AssignLabelRequest{LabelID: labelID}, nil)
 }
@@ -30,4 +36,16 @@ func (c *Client) AssignUser(ctx context.Context, boardID, stackID, cardID int64,
 
 func (c *Client) UnassignUser(ctx context.Context, boardID, stackID, cardID int64, userID string) error {
 	return c.doAppJSON(ctx, http.MethodPut, fmt.Sprintf("/cards/%d/unassign", cardID), map[string]any{"userId": userID, "type": 0}, nil)
+}
+
+func (c *Client) AssignDependentCard(ctx context.Context, boardID, stackID, cardID, dependentCardID int64) (Card, error) {
+	var card Card
+	err := c.doJSON(ctx, http.MethodPost, fmt.Sprintf("/boards/%d/stacks/%d/cards/%d/dependentCards/%d", boardID, stackID, cardID, dependentCardID), nil, &card)
+	return card, err
+}
+
+func (c *Client) RemoveDependentCard(ctx context.Context, boardID, stackID, cardID, dependentCardID int64) (Card, error) {
+	var card Card
+	err := c.doJSON(ctx, http.MethodDelete, fmt.Sprintf("/boards/%d/stacks/%d/cards/%d/dependentCards/%d", boardID, stackID, cardID, dependentCardID), nil, &card)
+	return card, err
 }
