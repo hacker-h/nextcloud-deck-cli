@@ -220,8 +220,8 @@ func TestCLIIntegrationDeckFlow(t *testing.T) {
 
 	dep := runJSON[deck.Card](t, "card", "create", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack2.ID), "--title", cardTitle+"-dep")
 	depID := dep.ID
-	_ = runMaybe(t, "card", "assign-dependent", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack2.ID), "--card", fmt.Sprint(cardID), "--dependent", fmt.Sprint(depID))
-	_ = runMaybe(t, "card", "remove-dependent", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack2.ID), "--card", fmt.Sprint(cardID), "--dependent", fmt.Sprint(depID))
+	_ = runMaybe(t, "card", "assign-dependent", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack2.ID), "--card", fmt.Sprint(cardID), "--dependent-card", fmt.Sprint(depID))
+	_ = runMaybe(t, "card", "remove-dependent", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack2.ID), "--card", fmt.Sprint(cardID), "--dependent-card", fmt.Sprint(depID))
 	_ = runMaybe(t, "card", "delete", "--board", fmt.Sprint(boardID), "--stack", fmt.Sprint(stack2.ID), "--card", fmt.Sprint(depID))
 
 	replyComment := runJSON[deck.Comment](t, "comment", "create", "--card", fmt.Sprint(cardID), "--message", "base comment")
@@ -231,7 +231,7 @@ func TestCLIIntegrationDeckFlow(t *testing.T) {
 	deletedCards := runJSON[[]deck.Card](t, "card", "deleted", "--board", fmt.Sprint(boardID))
 	_ = deletedCards
 
-	if _, err := runMaybeJSON[map[string]any](t, "board", "import-server", "--system", "DeckJson", "--file", exportPath); err != nil {
+	if _, err := runMaybeJSON[map[string]any](t, "board", "import-server", "--system", "DeckJson", "--data-file", exportPath); err != nil {
 		t.Logf("import-server unavailable on this server: %v", err)
 	}
 	clonedBoard := runJSON[deck.Board](t, "board", "clone", "--board", fmt.Sprint(boardID), "--with-cards", "true", "--with-labels", "true", "--with-due-date", "true")

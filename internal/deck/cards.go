@@ -16,7 +16,7 @@ func (c *Client) ListCards(ctx context.Context, boardID, stackID int64) ([]Card,
 
 func (c *Client) ListDeletedCards(ctx context.Context, boardID int64) ([]Card, error) {
 	var cards []Card
-	err := c.doAppJSON(ctx, http.MethodGet, fmt.Sprintf("/%d/cards/deleted", boardID), nil, &cards)
+	err := c.doAppJSON(ctx, http.MethodGet, fmt.Sprintf("/boards/%d/cards/deleted", boardID), nil, &cards)
 	return cards, err
 }
 

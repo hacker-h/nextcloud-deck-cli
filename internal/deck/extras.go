@@ -56,7 +56,7 @@ func (c *Client) ImportBoardFromFile(ctx context.Context, filePath string) (Boar
 	}
 	imported, importErr := c.ImportExportedBoard(ctx, payload)
 	if importErr != nil {
-		return Board{}, err
+		return Board{}, importErr
 	}
 	return imported, nil
 }
@@ -69,7 +69,7 @@ func (c *Client) GetImportSystems(ctx context.Context) ([]string, error) {
 
 func (c *Client) GetImportSchema(ctx context.Context, name string) (map[string]any, error) {
 	var schema map[string]any
-	err := c.doOCS(ctx, http.MethodGet, fmt.Sprintf("/boards/import/config/schema/%s", name), nil, &schema)
+	err := c.doOCS(ctx, http.MethodGet, fmt.Sprintf("/boards/import/config/schema/%s", url.PathEscape(name)), nil, &schema)
 	return schema, err
 }
 

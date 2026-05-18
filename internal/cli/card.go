@@ -216,7 +216,7 @@ func runCard(rt *runtime, args []string) error {
 		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0, fmt.Sprintf("card %s requires --board --stack --card", args[0])); err != nil {
 			return err
 		}
-		description, _, err := descriptionInput.resolve(fs)
+		description, hasDescription, err := descriptionInput.resolve(fs)
 		if err != nil {
 			return err
 		}
@@ -231,6 +231,9 @@ func runCard(rt *runtime, args []string) error {
 			card.Title = *title
 		}
 		if args[0] == "describe" {
+			if err := require(hasDescription, "card describe requires --description, --description-file, or --description-stdin"); err != nil {
+				return err
+			}
 			card.Description = description
 		}
 		if args[0] == "update" {
