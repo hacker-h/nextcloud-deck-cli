@@ -8,7 +8,7 @@ import (
 
 func runShare(rt *runtime, args []string) error {
 	if len(args) == 0 {
-		return printLine(rt.stdout, "deck share list|create|update|delete")
+		return printLine(rt.stdout, "deck share list|permissions|create|update|delete|leave|transfer-owner")
 	}
 	switch args[0] {
 	case "list":
@@ -25,6 +25,20 @@ func runShare(rt *runtime, args []string) error {
 			return err
 		}
 		return rt.printValue(rules, nil)
+	case "permissions":
+		fs := newFlagSet("share permissions", rt.stderr)
+		boardID := fs.Int64("board", 0, "board id")
+		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0, "share permissions requires --board"); err != nil {
+			return err
+		}
+		permissions, err := rt.client.GetBoardPermissions(rt.ctx, *boardID)
+		if err != nil {
+			return err
+		}
+		return rt.printValue(permissions, nil)
 	case "create":
 		fs := newFlagSet("share create", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -61,6 +75,34 @@ func runShare(rt *runtime, args []string) error {
 			return err
 		}
 		return rt.printStatus("updated", map[string]any{"boardId": *boardID, "shareId": *shareID}, "updated share %d", *shareID)
+	case "leave":
+		fs := newFlagSet("share leave", rt.stderr)
+		boardID := fs.Int64("board", 0, "board id")
+		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0, "share leave requires --board"); err != nil {
+			return err
+		}
+		if err := rt.client.LeaveBoard(rt.ctx, *boardID); err != nil {
+			return err
+		}
+		return rt.printStatus("left", map[string]any{"boardId": *boardID}, "left board %d", *boardID)
+	case "transfer-owner":
+		fs := newFlagSet("share transfer-owner", rt.stderr)
+		boardID := fs.Int64("board", 0, "board id")
+		newOwner := fs.String("new-owner", "", "new owner user id")
+		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*boardID != 0 && *newOwner != "", "share transfer-owner requires --board --new-owner"); err != nil {
+			return err
+		}
+		result, err := rt.client.TransferBoardOwner(rt.ctx, *boardID, *newOwner)
+		if err != nil {
+			return err
+		}
+		return rt.printValue(result, nil)
 	case "delete":
 		fs := newFlagSet("share delete", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")

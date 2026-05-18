@@ -1,14 +1,16 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/hacker-h/nextcloud-deck-api/internal/deck"
 )
 
 func runBoard(rt *runtime, args []string) error {
 	if len(args) == 0 {
-		return printLine(rt.stdout, "deck board list|get|find|create|update|archive|unarchive|clone|export|import|delete|restore|import-systems|import-schema")
+		return printLine(rt.stdout, "deck board list|get|find|create|update|archive|unarchive|clone|export|import|import-server|delete|restore|import-systems|import-schema")
 	}
 	switch args[0] {
 	case "list":
@@ -175,6 +177,34 @@ func runBoard(rt *runtime, args []string) error {
 			return err
 		}
 		return rt.printValue(board, nil)
+	case "import-server":
+		fs := newFlagSet("board import-server", rt.stderr)
+		system := fs.String("system", "", "import system name")
+		configPath := fs.String("config-file", "", "import config json file")
+		dataPath := fs.String("data-file", "", "import data json file")
+		if err := fs.Parse(args[1:]); err != nil {
+			return err
+		}
+		if err := require(*system != "" && *dataPath != "", "board import-server requires --system --data-file"); err != nil {
+			return err
+		}
+		config := map[string]any{}
+		if *configPath != "" {
+			loaded, err := readJSONObject(*configPath)
+			if err != nil {
+				return err
+			}
+			config = loaded
+		}
+		data, err := readJSONObject(*dataPath)
+		if err != nil {
+			return err
+		}
+		board, err := rt.client.ImportBoard(rt.ctx, deck.ImportRequest{System: *system, Config: config, Data: data})
+		if err != nil {
+			return err
+		}
+		return rt.printValue(board, nil)
 	case "restore":
 		fs := newFlagSet("board restore", rt.stderr)
 		boardID := fs.Int64("board", 0, "board id")
@@ -214,4 +244,16 @@ func runBoard(rt *runtime, args []string) error {
 	default:
 		return fmt.Errorf("unknown board command %q", args[0])
 	}
+}
+
+func readJSONObject(path string) (map[string]any, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var value map[string]any
+	if err := json.Unmarshal(data, &value); err != nil {
+		return nil, err
+	}
+	return value, nil
 }

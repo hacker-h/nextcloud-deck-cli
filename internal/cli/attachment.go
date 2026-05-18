@@ -1,6 +1,10 @@
 package cli
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/hacker-h/nextcloud-deck-api/internal/deck"
+)
 
 func runAttachment(rt *runtime, args []string) error {
 	if len(args) == 0 {
@@ -46,6 +50,7 @@ func runAttachment(rt *runtime, args []string) error {
 		stackID := fs.Int64("stack", 0, "stack id")
 		cardID := fs.Int64("card", 0, "card id")
 		attachmentID := fs.Int64("attachment", 0, "attachment id")
+		attachmentType := fs.String("type", "", "typed attachment type")
 		out := fs.String("out", "", "output path")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
@@ -53,7 +58,13 @@ func runAttachment(rt *runtime, args []string) error {
 		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0 && *attachmentID != 0 && *out != "", "attachment download requires --board --stack --card --attachment --out"); err != nil {
 			return err
 		}
-		if err := rt.client.DownloadAttachment(rt.ctx, *boardID, *stackID, *cardID, *attachmentID, *out); err != nil {
+		var err error
+		if *attachmentType != "" {
+			err = rt.client.DownloadAttachmentRef(rt.ctx, *cardID, fmt.Sprintf("%s:%d", *attachmentType, *attachmentID), *out)
+		} else {
+			err = rt.client.DownloadAttachment(rt.ctx, *boardID, *stackID, *cardID, *attachmentID, *out)
+		}
+		if err != nil {
 			return err
 		}
 		return rt.printStatus("downloaded", map[string]any{"boardId": *boardID, "stackId": *stackID, "cardId": *cardID, "attachmentId": *attachmentID, "path": *out}, "downloaded attachment %d", *attachmentID)
@@ -63,13 +74,20 @@ func runAttachment(rt *runtime, args []string) error {
 		stackID := fs.Int64("stack", 0, "stack id")
 		cardID := fs.Int64("card", 0, "card id")
 		attachmentID := fs.Int64("attachment", 0, "attachment id")
+		attachmentType := fs.String("type", "", "typed attachment type")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
 		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0 && *attachmentID != 0, "attachment delete requires --board --stack --card --attachment"); err != nil {
 			return err
 		}
-		if err := rt.client.DeleteAttachment(rt.ctx, *boardID, *stackID, *cardID, *attachmentID); err != nil {
+		var err error
+		if *attachmentType != "" {
+			err = rt.client.DeleteAttachmentRef(rt.ctx, *cardID, fmt.Sprintf("%s:%d", *attachmentType, *attachmentID))
+		} else {
+			err = rt.client.DeleteAttachment(rt.ctx, *boardID, *stackID, *cardID, *attachmentID)
+		}
+		if err != nil {
 			return err
 		}
 		return rt.printStatus("deleted", map[string]any{"boardId": *boardID, "stackId": *stackID, "cardId": *cardID, "attachmentId": *attachmentID}, "deleted attachment %d", *attachmentID)
@@ -79,13 +97,20 @@ func runAttachment(rt *runtime, args []string) error {
 		stackID := fs.Int64("stack", 0, "stack id")
 		cardID := fs.Int64("card", 0, "card id")
 		attachmentID := fs.Int64("attachment", 0, "attachment id")
+		attachmentType := fs.String("type", "", "typed attachment type")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
 		if err := require(*boardID != 0 && *stackID != 0 && *cardID != 0 && *attachmentID != 0, "attachment restore requires --board --stack --card --attachment"); err != nil {
 			return err
 		}
-		attachment, err := rt.client.RestoreAttachment(rt.ctx, *boardID, *stackID, *cardID, *attachmentID)
+		var attachment deck.Attachment
+		var err error
+		if *attachmentType != "" {
+			err = rt.client.RestoreAttachmentRef(rt.ctx, *cardID, fmt.Sprintf("%s:%d", *attachmentType, *attachmentID), &attachment)
+		} else {
+			attachment, err = rt.client.RestoreAttachment(rt.ctx, *boardID, *stackID, *cardID, *attachmentID)
+		}
 		if err != nil {
 			return err
 		}
