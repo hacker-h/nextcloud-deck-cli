@@ -1042,7 +1042,7 @@ func TestSetStackDone(t *testing.T) {
 // --- ListDeletedCards ---
 
 func TestListDeletedCards(t *testing.T) {
-	server := jsonRouteServer(t, http.MethodGet, "/index.php/apps/deck/boards/7/cards/deleted", []Card{{ID: 9, Title: "Deleted"}})
+	server := jsonRouteServer(t, http.MethodGet, "/index.php/apps/deck/7/cards/deleted", []Card{{ID: 9, Title: "Deleted"}})
 	defer server.Close()
 	cards, err := testClient(server.URL).ListDeletedCards(context.Background(), 7)
 	if err != nil || len(cards) != 1 || cards[0].ID != 9 {

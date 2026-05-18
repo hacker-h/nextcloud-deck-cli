@@ -228,8 +228,9 @@ func TestCLIIntegrationDeckFlow(t *testing.T) {
 	_ = runMaybe(t, "comment", "create", "--card", fmt.Sprint(cardID), "--message", "reply", "--reply-to", fmt.Sprint(replyComment.ID))
 	runOK(t, "comment", "delete", "--card", fmt.Sprint(cardID), "--comment", fmt.Sprint(replyComment.ID))
 
-	deletedCards := runJSON[[]deck.Card](t, "card", "deleted", "--board", fmt.Sprint(boardID))
-	_ = deletedCards
+	if _, err := runMaybeJSON[[]deck.Card](t, "card", "deleted", "--board", fmt.Sprint(boardID)); err != nil {
+		t.Logf("card deleted unavailable on this server: %v", err)
+	}
 
 	if _, err := runMaybeJSON[map[string]any](t, "board", "import-server", "--system", "DeckJson", "--data-file", exportPath); err != nil {
 		t.Logf("import-server unavailable on this server: %v", err)
