@@ -150,6 +150,133 @@ func TestRunBoardListDefaultsToTextAndSupportsJSONOutput(t *testing.T) {
 	}
 }
 
+func TestRunListFriendlyBoardSelectorsAndAliases(t *testing.T) {
+	var writes int32
+	var boardLookups int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			atomic.AddInt32(&writes, 1)
+			http.Error(w, "unexpected write", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/index.php/apps/deck/api/v1.0/boards":
+			atomic.AddInt32(&boardLookups, 1)
+			_, _ = w.Write([]byte(`[{"id":14,"title":"DAILY TODO","color":"ff0000","archived":false},{"id":27,"title":"Other","color":"00ff00","archived":false}]`))
+		case "/index.php/apps/deck/api/v1.0/boards/14/stacks":
+			_, _ = w.Write([]byte(`[{"id":2,"title":"Todo","boardId":14,"order":1}]`))
+		default:
+			t.Fatalf("path = %q", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	setNextcloudEnv(t, server.URL)
+
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{name: "list flag substring", args: []string{"list", "--board", "daily"}},
+		{name: "list board positional", args: []string{"list", "board", "daily"}},
+		{name: "stack alias", args: []string{"stack", "--board", "daily"}},
+		{name: "stacks alias", args: []string{"stacks", "--board", "daily"}},
+		{name: "exact title", args: []string{"list", "--board", "DAILY TODO"}},
+		{name: "numeric compatibility", args: []string{"list", "list", "--board", "14"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			if err := Run(tt.args, &stdout, &stderr); err != nil {
+				t.Fatalf("Run(%v) error = %v; stderr=%s", tt.args, err, stderr.String())
+			}
+			if got := stdout.String(); got != "2\tTodo\t1\n" {
+				t.Fatalf("stdout = %q", got)
+			}
+		})
+	}
+
+	if got := atomic.LoadInt32(&writes); got != 0 {
+		t.Fatalf("made %d write requests", got)
+	}
+	if got, want := atomic.LoadInt32(&boardLookups), int32(5); got != want {
+		t.Fatalf("board lookups = %d, want %d", got, want)
+	}
+}
+
+func TestRunListBoardTitleValidationErrors(t *testing.T) {
+	var writes int32
+	var stackReads int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			atomic.AddInt32(&writes, 1)
+			http.Error(w, "unexpected write", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/index.php/apps/deck/api/v1.0/boards":
+			_, _ = w.Write([]byte(`[{"id":14,"title":"Daily Todo","color":"ff0000","archived":false},{"id":15,"title":"Daily Work","color":"00ff00","archived":false}]`))
+		case "/index.php/apps/deck/api/v1.0/boards/14/stacks", "/index.php/apps/deck/api/v1.0/boards/15/stacks":
+			atomic.AddInt32(&stackReads, 1)
+			_, _ = w.Write([]byte(`[]`))
+		default:
+			t.Fatalf("path = %q", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	setNextcloudEnv(t, server.URL)
+
+	for _, tt := range []struct {
+		name string
+		args []string
+		want string
+	}{
+		{name: "multiple", args: []string{"list", "--board", "daily"}, want: `board "daily" matched 2 boards: 14 "Daily Todo", 15 "Daily Work"; use a numeric board id or a more specific title`},
+		{name: "unknown", args: []string{"list", "--board", "missing"}, want: `board "missing" not found; use a board id, exact title, or a unique case-insensitive title substring`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			err := Run(tt.args, &stdout, &stderr)
+			if err == nil {
+				t.Fatalf("Run(%v) succeeded; stdout=%s stderr=%s", tt.args, stdout.String(), stderr.String())
+			}
+			if !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("error = %q, want %q", err.Error(), tt.want)
+			}
+		})
+	}
+
+	if got := atomic.LoadInt32(&writes); got != 0 {
+		t.Fatalf("made %d write requests", got)
+	}
+	if got := atomic.LoadInt32(&stackReads); got != 0 {
+		t.Fatalf("read stacks %d times before resolving a unique board", got)
+	}
+}
+
+func TestRunUnknownListCommandShowsExamples(t *testing.T) {
+	clearNextcloudEnv(t)
+
+	var stdout, stderr bytes.Buffer
+	err := Run([]string{"list", "bogus"}, &stdout, &stderr)
+	if err == nil {
+		t.Fatal("Run(list bogus) succeeded")
+	}
+	for _, want := range []string{
+		`unknown list command "bogus"`,
+		"deck list --board <id-or-title>",
+		"deck list find --board <id-or-title> --title <list-title>",
+	} {
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("error = %q, want substring %q", err.Error(), want)
+		}
+	}
+}
+
 func TestRunBoardListLoadsSavedConfigWithoutEnv(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
