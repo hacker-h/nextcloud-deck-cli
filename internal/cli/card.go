@@ -13,15 +13,23 @@ func runCard(rt *runtime, args []string) error {
 	switch args[0] {
 	case "list":
 		fs := newFlagSet("card list", rt.stderr)
-		boardID := fs.Int64("board", 0, "board id")
-		stackID := fs.Int64("stack", 0, "stack id")
+		boardSelector := fs.String("board", "", "board id or title")
+		stackSelector := fs.String("stack", "", "stack id or title")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
-		if err := require(*boardID != 0 && *stackID != 0, "card list requires --board --stack"); err != nil {
+		if err := require(*boardSelector != "" && *stackSelector != "", "card list requires --board --stack"); err != nil {
 			return err
 		}
-		cards, err := rt.client.ListCards(rt.ctx, *boardID, *stackID)
+		boardID, err := resolveBoardSelector(rt, *boardSelector)
+		if err != nil {
+			return err
+		}
+		stackID, err := resolveStackSelector(rt, boardID, *stackSelector)
+		if err != nil {
+			return err
+		}
+		cards, err := rt.client.ListCards(rt.ctx, boardID, stackID)
 		if err != nil {
 			return err
 		}

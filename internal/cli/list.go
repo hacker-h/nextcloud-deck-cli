@@ -17,15 +17,37 @@ func runList(rt *runtime, args []string) error {
 	case "list", "archived":
 		fs := newFlagSet("list list", rt.stderr)
 		boardSelector := fs.String("board", "", "board id or title")
+		laneSelector := fs.String("lane", "", "lane/list title or id")
+		stackSelector := fs.String("stack", "", "stack/list title or id")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
 		if err := require(*boardSelector != "", fmt.Sprintf("list %s requires --board", args[0])); err != nil {
 			return err
 		}
+		if err := require(*laneSelector == "" || *stackSelector == "", "use only one of --lane or --stack"); err != nil {
+			return err
+		}
+		if args[0] == "archived" {
+			if err := require(*laneSelector == "" && *stackSelector == "", "list archived does not support --lane or --stack"); err != nil {
+				return err
+			}
+		}
 		boardID, err := resolveBoardSelector(rt, *boardSelector)
 		if err != nil {
 			return err
+		}
+		selector := first(*laneSelector, *stackSelector)
+		if args[0] == "list" && selector != "" {
+			stackID, err := resolveStackSelector(rt, boardID, selector)
+			if err != nil {
+				return err
+			}
+			cards, err := rt.client.ListCards(rt.ctx, boardID, stackID)
+			if err != nil {
+				return err
+			}
+			return rt.printValue(cards, nil)
 		}
 		var (
 			stacks any
@@ -156,11 +178,11 @@ func runList(rt *runtime, args []string) error {
 }
 
 func listUsage() string {
-	return strings.TrimSpace(`deck list [list] --board <id-or-title>
+	return strings.TrimSpace(`deck list [list] --board <id-or-title> [--lane <id-or-title>|--stack <id-or-title>]
 deck list board <id-or-title>
 deck list find --board <id-or-title> --title TEXT
 deck list archived|get|create|rename|reorder|done|undone|delete
-Aliases: deck stack ..., deck stacks ...`)
+Stack/lane aliases: deck stack ..., deck stacks ...`)
 }
 
 func normalizeListArgs(args []string) []string {
@@ -204,6 +226,61 @@ func resolveBoardSelector(rt *runtime, raw string) (int64, error) {
 		return board.ID, err
 	}
 	return 0, validationf("board %q not found; use a board id, exact title, or a unique case-insensitive title substring", selector)
+}
+
+func resolveStackSelector(rt *runtime, boardID int64, raw string) (int64, error) {
+	selector := strings.TrimSpace(raw)
+	if selector == "" {
+		return 0, validationError("stack selector must be an id or title")
+	}
+	if id, err := strconv.ParseInt(selector, 10, 64); err == nil {
+		if id <= 0 {
+			return 0, validationf("stack %q is not valid; use a positive id or stack/lane title", raw)
+		}
+		return id, nil
+	}
+
+	stacks, err := rt.client.GetStacks(rt.ctx, boardID)
+	if err != nil {
+		return 0, err
+	}
+	if stack, ok, err := resolveStackMatch(stacks, selector, func(title string) bool { return title == selector }); ok || err != nil {
+		return stack.ID, err
+	}
+	lowerSelector := strings.ToLower(selector)
+	if stack, ok, err := resolveStackMatch(stacks, selector, func(title string) bool { return strings.ToLower(title) == lowerSelector }); ok || err != nil {
+		return stack.ID, err
+	}
+	if stack, ok, err := resolveStackMatch(stacks, selector, func(title string) bool { return strings.Contains(strings.ToLower(title), lowerSelector) }); ok || err != nil {
+		return stack.ID, err
+	}
+	return 0, validationf("stack/lane %q not found on board %d; use a stack id, exact title, or a unique case-insensitive title substring", selector, boardID)
+}
+
+func resolveStackMatch(stacks []deck.Stack, selector string, matches func(string) bool) (deck.Stack, bool, error) {
+	var match deck.Stack
+	matched := make([]deck.Stack, 0, 2)
+	for _, stack := range stacks {
+		if matches(stack.Title) {
+			match = stack
+			matched = append(matched, stack)
+		}
+	}
+	if len(matched) == 0 {
+		return deck.Stack{}, false, nil
+	}
+	if len(matched) > 1 {
+		return deck.Stack{}, false, validationf("stack/lane %q matched %d stacks: %s; use a numeric stack id or a more specific title", selector, len(matched), formatStackMatches(matched))
+	}
+	return match, true, nil
+}
+
+func formatStackMatches(stacks []deck.Stack) string {
+	parts := make([]string, 0, len(stacks))
+	for _, stack := range stacks {
+		parts = append(parts, fmt.Sprintf("%d %q", stack.ID, stack.Title))
+	}
+	return strings.Join(parts, ", ")
 }
 
 func resolveBoardMatch(boards []deck.Board, selector string, matches func(string) bool) (deck.Board, bool, error) {

@@ -34,7 +34,8 @@ var helpCommands = map[string]commandHelp{
 		requiresSubcommand: true,
 		unknownLabel:       "card",
 		subcommands: map[string]commandHelp{
-			"list": {}, "get": {}, "deleted": {}, "create": {}, "clone": {}, "delete": {}, "move": {}, "reorder": {}, "archive": {}, "unarchive": {}, "done": {}, "undone": {}, "rename": {}, "describe": {}, "update": {}, "assign-user": {}, "unassign-user": {}, "assign-label": {}, "remove-label": {}, "assign-dependent": {}, "remove-dependent": {},
+			"get": {}, "deleted": {}, "create": {}, "clone": {}, "delete": {}, "move": {}, "reorder": {}, "archive": {}, "unarchive": {}, "done": {}, "undone": {}, "rename": {}, "describe": {}, "update": {}, "assign-user": {}, "unassign-user": {}, "assign-label": {}, "remove-label": {}, "assign-dependent": {}, "remove-dependent": {},
+			"list": {usage: "deck card list --board <id-or-title> --stack <id-or-title>"},
 			"due": {
 				usage:              "deck card due get|set|clear",
 				requiresSubcommand: true,
@@ -277,11 +278,11 @@ func knownSubcommands(names ...string) map[string]commandHelp {
 
 func listCommandHelp() commandHelp {
 	return commandHelp{
-		usage: strings.TrimSpace(`deck list [list] --board <id-or-title>
+		usage: strings.TrimSpace(`deck list [list] --board <id-or-title> [--lane <id-or-title>|--stack <id-or-title>]
 deck list board <id-or-title>
 deck list find --board <id-or-title> --title TEXT
 deck list archived|get|create|rename|reorder|done|undone|delete
-Aliases: deck stack ..., deck stacks ...`),
+Stack/lane aliases: deck stack ..., deck stacks ...`),
 		requiresSubcommand: true,
 		unknownLabel:       "list",
 		subcommands: map[string]commandHelp{
@@ -318,10 +319,10 @@ Profiles:
 
 Commands:
   board      list|get|find|create|update|archive|unarchive|clone|export|import|import-server|delete|restore|import-systems|import-schema
-  list       [list] --board <id-or-title>; find|archived|get|create|rename|reorder|done|undone|delete
-  stack      alias for list
-  stacks     alias for list
-  card       list|get|deleted|create|clone|delete|move|reorder|archive|unarchive|done|undone|rename|describe|update|due|assign-user|unassign-user|assign-label|remove-label|assign-dependent|remove-dependent
+  list       [list] --board <id-or-title> [--lane|--stack <id-or-title>]; find|archived|get|create|rename|reorder|done|undone|delete
+  stack      stack/lane alias for list
+  stacks     stack/lane alias for list
+  card       list --board <id-or-title> --stack <id-or-title>; get|deleted|create|clone|delete|move|reorder|archive|unarchive|done|undone|rename|describe|update|due|assign-user|unassign-user|assign-label|remove-label|assign-dependent|remove-dependent
   search     cards
   overview   upcoming
   session    create|sync|close
