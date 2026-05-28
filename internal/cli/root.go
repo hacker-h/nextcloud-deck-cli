@@ -120,20 +120,36 @@ var helpCommands = map[string]commandHelp{
 		unknownLabel:       "config",
 		subcommands:        knownSubcommands("get", "set"),
 	},
+	"auth": {
+		usage:              "deck auth setup|profiles",
+		requiresSubcommand: true,
+		unknownLabel:       "auth",
+		subcommands: map[string]commandHelp{
+			"setup":    {usage: "deck auth setup [--profile NAME]"},
+			"profiles": {usage: "deck auth profiles"},
+		},
+	},
 }
 
 func Run(args []string, stdout, stderr io.Writer) error {
 	var err error
 	var output outputFormat
 	var timeoutOverride time.Duration
-	args, output, timeoutOverride, err = parseGlobalArgs(args)
+	var profile string
+	args, output, timeoutOverride, profile, err = parseGlobalArgs(args)
 	if err != nil {
 		return err
 	}
 	if handled, err := handleBootstrap(args, stdout); handled {
 		return err
 	}
-	rt, err := newRuntimeWithTimeout(stdout, stderr, output, timeoutOverride)
+	if isAuthSetupCommand(args) {
+		return runAuthSetup(args[2:], stdout, profile)
+	}
+	if isAuthProfilesCommand(args) {
+		return runAuthProfiles(args[2:], stdout, output)
+	}
+	rt, err := newRuntimeWithTimeout(stdout, stderr, output, timeoutOverride, profile)
 	if err != nil {
 		return err
 	}
@@ -179,6 +195,8 @@ func dispatch(rt *runtime, args []string) error {
 		return runShare(rt, args[1:])
 	case "config":
 		return runConfig(rt, args[1:])
+	case "auth":
+		return runAuth(rt, args[1:])
 	default:
 		return validationf("unknown command %q", args[0])
 	}
@@ -267,6 +285,10 @@ Output:
 Timeout:
   --timeout DURATION      Request timeout. Defaults to 90s or DECK_TIMEOUT.
 
+Profiles:
+  --profile NAME          Saved auth profile. Overrides DECK_PROFILE. "default" uses the flat config.
+  deck auth profiles      Lists profiles without printing app passwords.
+
 Commands:
   board      list|get|find|create|update|archive|unarchive|clone|export|import|import-server|delete|restore|import-systems|import-schema
   list       list|get|find|archived|create|rename|reorder|done|undone|delete
@@ -283,12 +305,14 @@ Commands:
   attachment list|upload|download|delete|restore
   share      list|permissions|create|update|delete|leave|transfer-owner
   config     get|set
+  auth       setup|profiles
 `)+"\n")
 }
 
-func parseGlobalArgs(args []string) ([]string, outputFormat, time.Duration, error) {
+func parseGlobalArgs(args []string) ([]string, outputFormat, time.Duration, string, error) {
 	output := outputText
 	var timeoutOverride time.Duration
+	var profile string
 	cleaned := make([]string, 0, len(args))
 	commandSeen := false
 	for i := 0; i < len(args); i++ {
@@ -300,42 +324,58 @@ func parseGlobalArgs(args []string) ([]string, outputFormat, time.Duration, erro
 			output = outputText
 		case arg == "-o" || arg == "--output":
 			if i+1 >= len(args) {
-				return nil, "", 0, validationf("%s requires a value", arg)
+				return nil, "", 0, "", validationf("%s requires a value", arg)
 			}
 			parsed, err := parseOutputFormat(args[i+1])
 			if err != nil {
-				return nil, "", 0, err
+				return nil, "", 0, "", err
 			}
 			output = parsed
 			i++
 		case strings.HasPrefix(arg, "-o="):
 			parsed, err := parseOutputFormat(strings.TrimPrefix(arg, "-o="))
 			if err != nil {
-				return nil, "", 0, err
+				return nil, "", 0, "", err
 			}
 			output = parsed
 		case strings.HasPrefix(arg, "--output="):
 			parsed, err := parseOutputFormat(strings.TrimPrefix(arg, "--output="))
 			if err != nil {
-				return nil, "", 0, err
+				return nil, "", 0, "", err
 			}
 			output = parsed
 		case arg == "--timeout":
 			if i+1 >= len(args) {
-				return nil, "", 0, validationf("%s requires a value", arg)
+				return nil, "", 0, "", validationf("%s requires a value", arg)
 			}
 			parsed, err := parseTimeoutFlag(args[i+1])
 			if err != nil {
-				return nil, "", 0, err
+				return nil, "", 0, "", err
 			}
 			timeoutOverride = parsed
 			i++
 		case strings.HasPrefix(arg, "--timeout="):
 			parsed, err := parseTimeoutFlag(strings.TrimPrefix(arg, "--timeout="))
 			if err != nil {
-				return nil, "", 0, err
+				return nil, "", 0, "", err
 			}
 			timeoutOverride = parsed
+		case arg == "--profile":
+			if i+1 >= len(args) {
+				return nil, "", 0, "", validationf("%s requires a value", arg)
+			}
+			parsed := strings.TrimSpace(args[i+1])
+			if parsed == "" {
+				return nil, "", 0, "", validationError("--profile requires a non-empty value")
+			}
+			profile = parsed
+			i++
+		case strings.HasPrefix(arg, "--profile="):
+			parsed := strings.TrimSpace(strings.TrimPrefix(arg, "--profile="))
+			if parsed == "" {
+				return nil, "", 0, "", validationError("--profile requires a non-empty value")
+			}
+			profile = parsed
 		default:
 			cleaned = append(cleaned, arg)
 			if !strings.HasPrefix(arg, "-") {
@@ -343,7 +383,7 @@ func parseGlobalArgs(args []string) ([]string, outputFormat, time.Duration, erro
 			}
 		}
 	}
-	return cleaned, output, timeoutOverride, nil
+	return cleaned, output, timeoutOverride, profile, nil
 }
 
 func parseOutputFormat(raw string) (outputFormat, error) {
