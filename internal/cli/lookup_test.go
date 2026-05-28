@@ -95,7 +95,7 @@ func TestRunFindHelpPathsWithoutCredentials(t *testing.T) {
 		want string
 	}{
 		{args: []string{"help", "board", "find"}, want: "deck board find --title TEXT"},
-		{args: []string{"help", "list", "find"}, want: "deck list find --board ID --title TEXT"},
+		{args: []string{"help", "list", "find"}, want: "deck list find --board <id-or-title> --title TEXT"},
 		{args: []string{"help", "label", "find"}, want: "deck label find --board ID --title TEXT"},
 	}
 

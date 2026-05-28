@@ -26,15 +26,9 @@ var helpCommands = map[string]commandHelp{
 			"find": {usage: "deck board find --title TEXT"},
 		},
 	},
-	"list": {
-		usage:              "deck list list|get|find|archived|create|rename|reorder|done|undone|delete",
-		requiresSubcommand: true,
-		unknownLabel:       "list",
-		subcommands: map[string]commandHelp{
-			"list": {}, "get": {}, "archived": {}, "create": {}, "rename": {}, "reorder": {}, "done": {}, "undone": {}, "delete": {},
-			"find": {usage: "deck list find --board ID --title TEXT"},
-		},
-	},
+	"list":   listCommandHelp(),
+	"stack":  listCommandHelp(),
+	"stacks": listCommandHelp(),
 	"card": {
 		usage:              "deck card list|get|deleted|create|clone|delete|move|reorder|archive|unarchive|done|undone|rename|describe|update|due|assign-user|unassign-user|assign-label|remove-label|assign-dependent|remove-dependent",
 		requiresSubcommand: true,
@@ -167,7 +161,7 @@ func dispatch(rt *runtime, args []string) error {
 	switch args[0] {
 	case "board":
 		return runBoard(rt, args[1:])
-	case "list":
+	case "list", "stack", "stacks":
 		return runList(rt, args[1:])
 	case "card":
 		return runCard(rt, args[1:])
@@ -230,8 +224,14 @@ func handleCommandBootstrap(stdout io.Writer, path []string, command commandHelp
 	if isHelpArg(args[0]) || args[0] == "help" {
 		return true, printLine(stdout, command.usage)
 	}
+	if isListAlias(path[0]) && isFriendlyListSelector(args) {
+		return false, nil
+	}
 	subcommand, ok := command.subcommands[args[0]]
 	if command.subcommands != nil && !ok {
+		if isListAlias(path[0]) {
+			return true, validationf("unknown list command %q\nExamples:\n  deck list --board <id-or-title>\n  deck list board <id-or-title>\n  deck list find --board <id-or-title> --title <list-title>", args[0])
+		}
 		return true, validationf("unknown %s command %q", command.unknownLabel, args[0])
 	}
 	if len(args) > 1 && (isHelpArg(args[1]) || args[1] == "help") {
@@ -275,6 +275,33 @@ func knownSubcommands(names ...string) map[string]commandHelp {
 	return subcommands
 }
 
+func listCommandHelp() commandHelp {
+	return commandHelp{
+		usage: strings.TrimSpace(`deck list [list] --board <id-or-title>
+deck list board <id-or-title>
+deck list find --board <id-or-title> --title TEXT
+deck list archived|get|create|rename|reorder|done|undone|delete
+Aliases: deck stack ..., deck stacks ...`),
+		requiresSubcommand: true,
+		unknownLabel:       "list",
+		subcommands: map[string]commandHelp{
+			"list": {}, "get": {}, "archived": {}, "create": {}, "rename": {}, "reorder": {}, "done": {}, "undone": {}, "delete": {},
+			"find": {usage: "deck list find --board <id-or-title> --title TEXT"},
+		},
+	}
+}
+
+func isListAlias(command string) bool {
+	return command == "list" || command == "stack" || command == "stacks"
+}
+
+func isFriendlyListSelector(args []string) bool {
+	if len(args) == 0 {
+		return false
+	}
+	return strings.HasPrefix(args[0], "-") || args[0] == "board"
+}
+
 func printUsage(out io.Writer) {
 	_, _ = io.WriteString(out, strings.TrimSpace(`deck <command>
 
@@ -291,7 +318,9 @@ Profiles:
 
 Commands:
   board      list|get|find|create|update|archive|unarchive|clone|export|import|import-server|delete|restore|import-systems|import-schema
-  list       list|get|find|archived|create|rename|reorder|done|undone|delete
+  list       [list] --board <id-or-title>; find|archived|get|create|rename|reorder|done|undone|delete
+  stack      alias for list
+  stacks     alias for list
   card       list|get|deleted|create|clone|delete|move|reorder|archive|unarchive|done|undone|rename|describe|update|due|assign-user|unassign-user|assign-label|remove-label|assign-dependent|remove-dependent
   search     cards
   overview   upcoming

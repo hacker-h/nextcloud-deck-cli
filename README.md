@@ -61,6 +61,9 @@ Quick start:
 deck auth setup
 deck board create --title "Project" --color ff6600
 deck board find --title "Project"
+deck list --board "Project"
+deck list board project
+deck stack --board project
 deck list create --board 1 --title "Backlog"
 deck list find --board 1 --title "Backlog"
 deck label find --board 1 --title "Bug"
@@ -137,15 +140,21 @@ deck board restore --board ID
 `list`
 
 ```bash
+deck list --board ID_OR_TITLE
+deck list board ID_OR_TITLE
+deck stack --board ID_OR_TITLE
+deck stacks --board ID_OR_TITLE
 deck list list --board ID
 deck list archived --board ID
 deck list get --board ID --list ID
-deck list find --board ID --title TEXT
+deck list find --board ID_OR_TITLE --title TEXT
 deck list create --board ID --title TEXT [--order N]
 deck list rename --board ID --list ID --title TEXT
 deck list reorder --board ID --list ID --order N
 deck list delete --board ID --list ID
 ```
+
+For list/stack listing and `list find`, `--board` accepts either a numeric board ID or a board title. Title lookup tries exact title, case-insensitive exact title, then a unique case-insensitive substring. If a title matches multiple boards, use the numeric board ID or a more specific title.
 
 `card`
 
