@@ -4,11 +4,20 @@ Go CLI for Nextcloud Deck.
 
 ## Get Started
 
-Env:
+Run interactive setup once:
+
+```bash
+deck auth setup
+```
+
+The setup command prompts for your Nextcloud base URL and username, opens `<base>/settings/user/security` so you can create an app password, then saves local auth config under your user config directory.
+
+Env overrides are optional and take precedence over the saved local config:
 
 - `NEXTCLOUD_BASE_URL`
 - `NEXTCLOUD_USERNAME`
 - `NEXTCLOUD_PASSWORD` or `NEXTCLOUD_APP_PASSWORD`
+- `DECK_PROFILE` optional saved auth profile name
 - `DECK_TIMEOUT` optional request timeout, Go duration syntax, default `90s`
 
 Example:
@@ -16,8 +25,28 @@ Example:
 ```bash
 export NEXTCLOUD_BASE_URL="https://nextcloud.example.com"
 export NEXTCLOUD_USERNAME="antonia"
-export NEXTCLOUD_PASSWORD="secret"
+export NEXTCLOUD_APP_PASSWORD="secret"
+export DECK_PROFILE="work"
 export DECK_TIMEOUT="5m"
+```
+
+### Auth Profiles
+
+The default saved auth config keeps using the existing flat JSON fields, so current users do not need to re-authenticate. Additional logins can be saved as named profiles:
+
+```bash
+deck auth setup --profile work
+deck --profile work board list
+DECK_PROFILE=work deck board list
+```
+
+Profile selection precedence is `--profile NAME`, then `DECK_PROFILE`, then the default flat config. The profile name `default` is an alias for the flat config. Credential env vars (`NEXTCLOUD_BASE_URL`, `NEXTCLOUD_USERNAME`, `NEXTCLOUD_PASSWORD`, `NEXTCLOUD_APP_PASSWORD`) still override the selected profile fields.
+
+List saved profiles without printing app passwords:
+
+```bash
+deck auth profiles
+deck auth profiles --json
 ```
 
 Build:
@@ -29,6 +58,7 @@ go build ./cmd/deck
 Quick start:
 
 ```bash
+deck auth setup
 deck board create --title "Project" --color ff6600
 deck board find --title "Project"
 deck list create --board 1 --title "Backlog"
@@ -196,6 +226,16 @@ deck share delete --board ID --share-id ID
 deck config get
 deck config set --key KEY --value VALUE
 ```
+
+`auth`
+
+```bash
+deck auth setup
+deck auth setup --profile NAME
+deck auth profiles [--json]
+```
+
+`auth setup` writes default local CLI credentials. `auth setup --profile NAME` saves or updates a named profile without changing the default. `auth profiles` lists profile names, base URLs, and usernames, and never prints app passwords. `--profile NAME` or `DECK_PROFILE` selects saved profiles for commands. `NEXTCLOUD_BASE_URL`, `NEXTCLOUD_USERNAME`, `NEXTCLOUD_PASSWORD`, and `NEXTCLOUD_APP_PASSWORD` override saved values when present. Base URLs must use `https://`, except `http://localhost` and `http://127.0.0.1` for local dev and `httptest`.
 
 `search`, `overview`, `user`, `capabilities`, `activity`
 
