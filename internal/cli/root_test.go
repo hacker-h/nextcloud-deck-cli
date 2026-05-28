@@ -206,6 +206,104 @@ func TestRunListFriendlyBoardSelectorsAndAliases(t *testing.T) {
 	}
 }
 
+func TestRunListLaneAndStackSelectorsListCards(t *testing.T) {
+	var writes int32
+	var stackListReads int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			atomic.AddInt32(&writes, 1)
+			http.Error(w, "unexpected write", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/index.php/apps/deck/api/v1.0/boards/14/stacks":
+			atomic.AddInt32(&stackListReads, 1)
+			_, _ = w.Write([]byte(`[{"id":96,"title":"Heute","boardId":14,"order":1},{"id":97,"title":"Morgen","boardId":14,"order":2}]`))
+		case "/index.php/apps/deck/api/v1.0/boards/14/stacks/96":
+			_, _ = w.Write([]byte(`{"id":96,"title":"Heute","boardId":14,"order":1,"cards":[{"id":91,"title":"Call","stackId":96,"type":"plain","order":1,"archived":false}]}`))
+		default:
+			t.Fatalf("path = %q", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	setNextcloudEnv(t, server.URL)
+
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{name: "lane title", args: []string{"list", "--board", "14", "--lane", "Heute", "--json"}},
+		{name: "stack title", args: []string{"list", "--board", "14", "--stack", "Heute", "--json"}},
+		{name: "stack numeric", args: []string{"list", "--board", "14", "--stack", "96", "--json"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			if err := Run(tt.args, &stdout, &stderr); err != nil {
+				t.Fatalf("Run(%v) error = %v; stderr=%s", tt.args, err, stderr.String())
+			}
+			var cards []map[string]any
+			if err := json.Unmarshal(stdout.Bytes(), &cards); err != nil {
+				t.Fatalf("json.Unmarshal() error = %v; stdout=%s", err, stdout.String())
+			}
+			if len(cards) != 1 || cards[0]["id"] != float64(91) || cards[0]["title"] != "Call" {
+				t.Fatalf("cards = %#v", cards)
+			}
+		})
+	}
+
+	if got := atomic.LoadInt32(&writes); got != 0 {
+		t.Fatalf("made %d write requests", got)
+	}
+	if got, want := atomic.LoadInt32(&stackListReads), int32(2); got != want {
+		t.Fatalf("stack list reads = %d, want %d", got, want)
+	}
+}
+
+func TestRunCardListBoardAndStackTitleSelectors(t *testing.T) {
+	var writes int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			atomic.AddInt32(&writes, 1)
+			http.Error(w, "unexpected write", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/index.php/apps/deck/api/v1.0/boards":
+			_, _ = w.Write([]byte(`[{"id":14,"title":"DAILY TODO","color":"ff0000","archived":false}]`))
+		case "/index.php/apps/deck/api/v1.0/boards/14/stacks":
+			_, _ = w.Write([]byte(`[{"id":96,"title":"Heute","boardId":14,"order":1}]`))
+		case "/index.php/apps/deck/api/v1.0/boards/14/stacks/96":
+			_, _ = w.Write([]byte(`{"id":96,"title":"Heute","boardId":14,"order":1,"cards":[{"id":91,"title":"Call","stackId":96,"type":"plain","order":1,"archived":false}]}`))
+		default:
+			t.Fatalf("path = %q", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	setNextcloudEnv(t, server.URL)
+
+	var stdout, stderr bytes.Buffer
+	args := []string{"card", "list", "--board", "DAILY TODO", "--stack", "Heute", "--json"}
+	if err := Run(args, &stdout, &stderr); err != nil {
+		t.Fatalf("Run(%v) error = %v; stderr=%s", args, err, stderr.String())
+	}
+	var cards []map[string]any
+	if err := json.Unmarshal(stdout.Bytes(), &cards); err != nil {
+		t.Fatalf("json.Unmarshal() error = %v; stdout=%s", err, stdout.String())
+	}
+	if len(cards) != 1 || cards[0]["id"] != float64(91) || cards[0]["title"] != "Call" {
+		t.Fatalf("cards = %#v", cards)
+	}
+	if got := atomic.LoadInt32(&writes); got != 0 {
+		t.Fatalf("made %d write requests", got)
+	}
+}
+
 func TestRunListBoardTitleValidationErrors(t *testing.T) {
 	var writes int32
 	var stackReads int32
@@ -256,6 +354,66 @@ func TestRunListBoardTitleValidationErrors(t *testing.T) {
 	if got := atomic.LoadInt32(&stackReads); got != 0 {
 		t.Fatalf("read stacks %d times before resolving a unique board", got)
 	}
+}
+
+func TestRunStackSelectorValidationErrors(t *testing.T) {
+	var writes int32
+	var cardReads int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			atomic.AddInt32(&writes, 1)
+			http.Error(w, "unexpected write", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/index.php/apps/deck/api/v1.0/boards/14/stacks":
+			_, _ = w.Write([]byte(`[{"id":96,"title":"Heute","boardId":14,"order":1},{"id":97,"title":"Heute Abend","boardId":14,"order":2}]`))
+		case "/index.php/apps/deck/api/v1.0/boards/14/stacks/96":
+			atomic.AddInt32(&cardReads, 1)
+			_, _ = w.Write([]byte(`{"id":96,"title":"Heute","boardId":14,"order":1,"cards":[]}`))
+		default:
+			t.Fatalf("path = %q", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	setNextcloudEnv(t, server.URL)
+
+	for _, tt := range []struct {
+		name string
+		args []string
+		want string
+	}{
+		{name: "ambiguous", args: []string{"list", "--board", "14", "--stack", "Heut"}, want: `stack/lane "Heut" matched 2 stacks: 96 "Heute", 97 "Heute Abend"; use a numeric stack id or a more specific title`},
+		{name: "unknown", args: []string{"card", "list", "--board", "14", "--stack", "Missing"}, want: `stack/lane "Missing" not found on board 14; use a stack id, exact title, or a unique case-insensitive title substring`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			err := Run(tt.args, &stdout, &stderr)
+			if err == nil {
+				t.Fatalf("Run(%v) succeeded; stdout=%s stderr=%s", tt.args, stdout.String(), stderr.String())
+			}
+			if !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("error = %q, want %q", err.Error(), tt.want)
+			}
+		})
+	}
+
+	if got := atomic.LoadInt32(&writes); got != 0 {
+		t.Fatalf("made %d write requests", got)
+	}
+	if got := atomic.LoadInt32(&cardReads); got != 0 {
+		t.Fatalf("read cards %d times before resolving a unique stack", got)
+	}
+}
+
+func TestRunListRejectsConflictingLaneAndStackWithoutAPI(t *testing.T) {
+	runInvalidCommandDoesNotCallAPI(t, []string{"list", "--board", "14", "--lane", "Heute", "--stack", "Heute"}, "use only one of --lane or --stack")
+}
+
+func TestRunListArchivedRejectsLaneAndStackWithoutAPI(t *testing.T) {
+	runInvalidCommandDoesNotCallAPI(t, []string{"list", "archived", "--board", "14", "--stack", "Heute"}, "list archived does not support --lane or --stack")
 }
 
 func TestRunUnknownListCommandShowsExamples(t *testing.T) {
