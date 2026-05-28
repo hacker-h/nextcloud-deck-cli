@@ -65,8 +65,10 @@ deck list --board "Project"
 deck list board project
 deck stack --board project
 deck list create --board 1 --title "Backlog"
+deck list --board "Project" --lane "Backlog"
 deck list find --board 1 --title "Backlog"
 deck label find --board 1 --title "Bug"
+deck card list --board "Project" --stack "Backlog"
 deck card create --board 1 --stack 2 --title "Test"
 deck card describe --board 1 --stack 2 --card 3 --description "- [ ] follow up"
 deck todo add --board 1 --stack 2 --card 3 --text "Call customer"
@@ -144,6 +146,8 @@ deck list --board ID_OR_TITLE
 deck list board ID_OR_TITLE
 deck stack --board ID_OR_TITLE
 deck stacks --board ID_OR_TITLE
+deck list --board ID_OR_TITLE --lane STACK_ID_OR_TITLE
+deck list --board ID_OR_TITLE --stack STACK_ID_OR_TITLE
 deck list list --board ID
 deck list archived --board ID
 deck list get --board ID --list ID
@@ -154,12 +158,12 @@ deck list reorder --board ID --list ID --order N
 deck list delete --board ID --list ID
 ```
 
-For list/stack listing and `list find`, `--board` accepts either a numeric board ID or a board title. Title lookup tries exact title, case-insensitive exact title, then a unique case-insensitive substring. If a title matches multiple boards, use the numeric board ID or a more specific title.
+For list/stack listing and `list find`, `--board` accepts either a numeric board ID or a board title. `--lane` is a synonym for stack/list column; `deck list --board ... --lane ...` and `deck list --board ... --stack ...` list cards from that stack. Board and stack title lookup tries exact title, case-insensitive exact title, then a unique case-insensitive substring. If a title matches multiple boards or stacks, use the numeric ID or a more specific title.
 
 `card`
 
 ```bash
-deck card list --board ID --stack ID
+deck card list --board ID_OR_TITLE --stack STACK_ID_OR_TITLE
 deck card get --board ID --stack ID --card ID
 deck card create --board ID --stack ID --title TEXT [--description TEXT|--description-file PATH|--description-stdin|--body-file PATH|--body-stdin] [--due RFC3339] [--order N]
 deck card clone --card ID --to-stack ID
@@ -180,6 +184,8 @@ deck card assign-label --board ID --stack ID --card ID --label ID
 deck card remove-label --board ID --stack ID --card ID --label ID
 deck card delete --board ID --stack ID --card ID
 ```
+
+Only `card list` accepts board and stack titles. Card write/update/delete commands remain numeric-only.
 
 `todo`
 
