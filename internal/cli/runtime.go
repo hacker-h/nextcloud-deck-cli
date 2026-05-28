@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"os"
 	"reflect"
 	"sort"
 	"strings"
@@ -32,8 +33,11 @@ const (
 	outputText outputFormat = "text"
 )
 
-func newRuntimeWithTimeout(stdout, stderr io.Writer, output outputFormat, timeoutOverride time.Duration) (*runtime, error) {
-	cfg, err := config.LoadFromEnv()
+func newRuntimeWithTimeout(stdout, stderr io.Writer, output outputFormat, timeoutOverride time.Duration, profile string) (*runtime, error) {
+	if profile == "" {
+		profile = os.Getenv("DECK_PROFILE")
+	}
+	cfg, err := config.LoadProfile(profile)
 	if err != nil {
 		return nil, err
 	}
