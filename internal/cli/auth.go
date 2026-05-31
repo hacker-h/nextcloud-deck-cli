@@ -4,14 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"os/exec"
-	goruntime "runtime"
 	"strings"
 
 	"github.com/hacker-h/nextcloud-deck-api/internal/config"
 )
-
-var openBrowser = defaultOpenBrowser
 
 func isAuthSetupCommand(args []string) bool {
 	return len(args) >= 2 && args[0] == "auth" && args[1] == "setup"
@@ -51,11 +47,6 @@ func runAuthSetup(args []string, stdout io.Writer, profile string) error {
 	securityURL := normalizedBaseURL + "/settings/user/security"
 	if err := printLine(stdout, "Open this URL to create an app password: %s", securityURL); err != nil {
 		return err
-	}
-	if err := openBrowser(securityURL); err != nil {
-		if err := printLine(stdout, "Could not open browser: %v", err); err != nil {
-			return err
-		}
 	}
 	appPassword, err := promptRequired(reader, stdout, "Nextcloud app password: ")
 	if err != nil {
@@ -103,17 +94,4 @@ func promptRequired(reader *bufio.Reader, stdout io.Writer, prompt string) (stri
 		return "", validationf("%s is required", strings.TrimSuffix(prompt, ": "))
 	}
 	return trimmed, nil
-}
-
-func defaultOpenBrowser(target string) error {
-	var cmd *exec.Cmd
-	switch goruntime.GOOS {
-	case "darwin":
-		cmd = exec.Command("open", target)
-	case "windows":
-		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", target)
-	default:
-		cmd = exec.Command("xdg-open", target)
-	}
-	return cmd.Start()
 }

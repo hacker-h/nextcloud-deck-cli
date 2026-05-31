@@ -436,8 +436,7 @@ func TestRunUnknownListCommandShowsExamples(t *testing.T) {
 }
 
 func TestRunBoardListLoadsSavedConfigWithoutEnv(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t)
 	clearNextcloudEnv(t)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -467,8 +466,7 @@ func TestRunBoardListLoadsSavedConfigWithoutEnv(t *testing.T) {
 }
 
 func TestRunBoardListEnvOverridesSavedConfig(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t)
 	clearNextcloudEnv(t)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -501,8 +499,7 @@ func TestRunBoardListEnvOverridesSavedConfig(t *testing.T) {
 }
 
 func TestRunBoardListSelectsSavedProfileWithGlobalFlag(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t)
 	clearNextcloudEnv(t)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -538,8 +535,7 @@ func TestRunBoardListSelectsSavedProfileWithGlobalFlag(t *testing.T) {
 }
 
 func TestRunBoardListSelectsDeckProfileEnv(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t)
 	clearNextcloudEnv(t)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -567,8 +563,7 @@ func TestRunBoardListSelectsDeckProfileEnv(t *testing.T) {
 }
 
 func TestRunBoardListCLIProfileOverridesDeckProfileEnv(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t)
 	clearNextcloudEnv(t)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -599,8 +594,7 @@ func TestRunBoardListCLIProfileOverridesDeckProfileEnv(t *testing.T) {
 }
 
 func TestRunBoardListProfileCredentialEnvOverridesSelectedProfile(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t)
 	clearNextcloudEnv(t)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -630,8 +624,7 @@ func TestRunBoardListProfileCredentialEnvOverridesSelectedProfile(t *testing.T) 
 }
 
 func TestRunBoardListDefaultProfileAliasIgnoresDeckProfileEnv(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t)
 	clearNextcloudEnv(t)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -662,8 +655,7 @@ func TestRunBoardListDefaultProfileAliasIgnoresDeckProfileEnv(t *testing.T) {
 }
 
 func TestRunBoardListMissingProfileError(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t)
 	clearNextcloudEnv(t)
 	if err := (config.Config{BaseURL: "https://default.example.com", Username: "default-user", Password: "default-pw"}).Save(); err != nil {
 		t.Fatalf("Save() error = %v", err)
@@ -685,26 +677,14 @@ func TestRunProfileOptionErrors(t *testing.T) {
 	}
 }
 
-func TestRunAuthSetupSavesConfigWithoutEnvAndOpensSecurityURL(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
+func TestRunAuthSetupSavesConfigWithoutEnvAndPrintsSecurityURL(t *testing.T) {
+	setTestHome(t)
 	clearNextcloudEnv(t)
 	withCommandStdin(t, "nextcloud.xhacker.de/\n antonia \n app-pw \n")
-
-	var opened []string
-	oldOpenBrowser := openBrowser
-	openBrowser = func(target string) error {
-		opened = append(opened, target)
-		return nil
-	}
-	t.Cleanup(func() { openBrowser = oldOpenBrowser })
 
 	var stdout, stderr bytes.Buffer
 	if err := Run([]string{"auth", "setup"}, &stdout, &stderr); err != nil {
 		t.Fatalf("Run(auth setup) error = %v; stderr=%s", err, stderr.String())
-	}
-	if len(opened) != 1 || opened[0] != "https://nextcloud.xhacker.de/settings/user/security" {
-		t.Fatalf("opened = %#v", opened)
 	}
 	for _, want := range []string{"Nextcloud base URL: ", "Nextcloud username: ", "Open this URL to create an app password: https://nextcloud.xhacker.de/settings/user/security", "Nextcloud app password: ", "Saved local auth config."} {
 		if !strings.Contains(stdout.String(), want) {
@@ -723,25 +703,16 @@ func TestRunAuthSetupSavesConfigWithoutEnvAndOpensSecurityURL(t *testing.T) {
 }
 
 func TestRunAuthSetupAllowsLocalhostHTTPBaseURL(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t)
 	clearNextcloudEnv(t)
 	withCommandStdin(t, "http://localhost:8080/root\nantonia\napp-pw\n")
-
-	var opened []string
-	oldOpenBrowser := openBrowser
-	openBrowser = func(target string) error {
-		opened = append(opened, target)
-		return nil
-	}
-	t.Cleanup(func() { openBrowser = oldOpenBrowser })
 
 	var stdout, stderr bytes.Buffer
 	if err := Run([]string{"auth", "setup"}, &stdout, &stderr); err != nil {
 		t.Fatalf("Run(auth setup) error = %v; stderr=%s", err, stderr.String())
 	}
-	if len(opened) != 1 || opened[0] != "http://localhost:8080/root/settings/user/security" {
-		t.Fatalf("opened = %#v", opened)
+	if !strings.Contains(stdout.String(), "Open this URL to create an app password: http://localhost:8080/root/settings/user/security") {
+		t.Fatalf("stdout = %q", stdout.String())
 	}
 	if !strings.Contains(stdout.String(), "Saved local auth config.") {
 		t.Fatalf("stdout = %q", stdout.String())
@@ -758,17 +729,12 @@ func TestRunAuthSetupAllowsLocalhostHTTPBaseURL(t *testing.T) {
 }
 
 func TestRunAuthSetupSavesNamedProfileWithoutTouchingDefault(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t)
 	clearNextcloudEnv(t)
 	if err := (config.Config{BaseURL: "https://default.example.com", Username: "default", Password: "default-pw"}).Save(); err != nil {
 		t.Fatalf("Save() error = %v", err)
 	}
 	withCommandStdin(t, "nextcloud.xhacker.de/\n antonia \n app-pw \n")
-
-	oldOpenBrowser := openBrowser
-	openBrowser = func(string) error { return nil }
-	t.Cleanup(func() { openBrowser = oldOpenBrowser })
 
 	var stdout, stderr bytes.Buffer
 	if err := Run([]string{"auth", "setup", "--profile", "work"}, &stdout, &stderr); err != nil {
@@ -794,17 +760,12 @@ func TestRunAuthSetupSavesNamedProfileWithoutTouchingDefault(t *testing.T) {
 }
 
 func TestRunAuthSetupReplacesDuplicateNamedProfile(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t)
 	clearNextcloudEnv(t)
 	if err := (config.Config{BaseURL: "https://old.example.com", Username: "old", Password: "old-pw"}).SaveProfile("work"); err != nil {
 		t.Fatalf("SaveProfile() error = %v", err)
 	}
 	withCommandStdin(t, "nextcloud.xhacker.de/\n antonia \n app-pw \n")
-
-	oldOpenBrowser := openBrowser
-	openBrowser = func(string) error { return nil }
-	t.Cleanup(func() { openBrowser = oldOpenBrowser })
 
 	var stdout, stderr bytes.Buffer
 	if err := Run([]string{"--profile", "work", "auth", "setup"}, &stdout, &stderr); err != nil {
@@ -820,8 +781,7 @@ func TestRunAuthSetupReplacesDuplicateNamedProfile(t *testing.T) {
 }
 
 func TestRunAuthProfilesListsProfilesWithoutSecrets(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t)
 	clearNextcloudEnv(t)
 	if err := (config.Config{BaseURL: "https://default.example.com", Username: "default", Password: "default-secret"}).Save(); err != nil {
 		t.Fatalf("Save() error = %v", err)
@@ -861,18 +821,9 @@ func TestRunAuthProfilesListsProfilesWithoutSecrets(t *testing.T) {
 }
 
 func TestRunAuthSetupRejectsExternalHTTPBaseURL(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
+	setTestHome(t)
 	clearNextcloudEnv(t)
 	withCommandStdin(t, "http://cloud.example.com\n")
-
-	var opened []string
-	oldOpenBrowser := openBrowser
-	openBrowser = func(target string) error {
-		opened = append(opened, target)
-		return nil
-	}
-	t.Cleanup(func() { openBrowser = oldOpenBrowser })
 
 	var stdout, stderr bytes.Buffer
 	err := Run([]string{"auth", "setup"}, &stdout, &stderr)
@@ -882,33 +833,8 @@ func TestRunAuthSetupRejectsExternalHTTPBaseURL(t *testing.T) {
 	if !strings.Contains(err.Error(), "http://cloud.example.com") {
 		t.Fatalf("error = %v", err)
 	}
-	if len(opened) != 0 {
-		t.Fatalf("opened = %#v", opened)
-	}
 	if strings.Contains(stdout.String(), "Nextcloud username:") || strings.Contains(stdout.String(), "Nextcloud app password:") {
 		t.Fatalf("stdout = %q", stdout.String())
-	}
-}
-
-func TestRunAuthSetupContinuesWhenBrowserOpenFails(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	clearNextcloudEnv(t)
-	withCommandStdin(t, "https://nextcloud.xhacker.de\nantonia\napp-pw\n")
-
-	oldOpenBrowser := openBrowser
-	openBrowser = func(string) error { return errors.New("no browser") }
-	t.Cleanup(func() { openBrowser = oldOpenBrowser })
-
-	var stdout, stderr bytes.Buffer
-	if err := Run([]string{"auth", "setup"}, &stdout, &stderr); err != nil {
-		t.Fatalf("Run(auth setup) error = %v; stderr=%s", err, stderr.String())
-	}
-	if !strings.Contains(stdout.String(), "Could not open browser: no browser") || !strings.Contains(stdout.String(), "Saved local auth config.") {
-		t.Fatalf("stdout = %q", stdout.String())
-	}
-	if _, err := os.Stat(defaultTestConfigPath(t)); err != nil {
-		t.Fatalf("expected saved config: %v", err)
 	}
 }
 
@@ -1758,6 +1684,15 @@ func clearNextcloudEnv(t *testing.T) {
 	t.Setenv("NEXTCLOUD_PASSWORD", "")
 	t.Setenv("NEXTCLOUD_APP_PASSWORD", "")
 	t.Setenv("DECK_PROFILE", "")
+}
+
+func setTestHome(t *testing.T) {
+	t.Helper()
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
+	t.Setenv("APPDATA", filepath.Join(home, "AppData", "Roaming"))
+	t.Setenv("LOCALAPPDATA", filepath.Join(home, "AppData", "Local"))
 }
 
 func defaultTestConfigPath(t *testing.T) string {

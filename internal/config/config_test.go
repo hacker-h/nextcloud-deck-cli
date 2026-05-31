@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -189,15 +190,17 @@ func TestSaveToPathAndLoadFromSources(t *testing.T) {
 	if err := want.SaveToPath(path); err != nil {
 		t.Fatalf("SaveToPath() error = %v", err)
 	}
-	if info, err := os.Stat(dir); err != nil {
-		t.Fatalf("Stat(dir) error = %v", err)
-	} else if got := info.Mode().Perm(); got != 0o700 {
-		t.Fatalf("dir mode = %o, want 700", got)
-	}
-	if info, err := os.Stat(path); err != nil {
-		t.Fatalf("Stat(path) error = %v", err)
-	} else if got := info.Mode().Perm(); got != 0o600 {
-		t.Fatalf("file mode = %o, want 600", got)
+	if runtime.GOOS != "windows" {
+		if info, err := os.Stat(dir); err != nil {
+			t.Fatalf("Stat(dir) error = %v", err)
+		} else if got := info.Mode().Perm(); got != 0o700 {
+			t.Fatalf("dir mode = %o, want 700", got)
+		}
+		if info, err := os.Stat(path); err != nil {
+			t.Fatalf("Stat(path) error = %v", err)
+		} else if got := info.Mode().Perm(); got != 0o600 {
+			t.Fatalf("file mode = %o, want 600", got)
+		}
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
