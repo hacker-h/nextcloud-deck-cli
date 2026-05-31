@@ -10,7 +10,7 @@ Run interactive setup once:
 deck auth setup
 ```
 
-The setup command prompts for your Nextcloud base URL and username, opens `<base>/settings/user/security` so you can create an app password, then saves local auth config under your user config directory.
+The setup command prompts for your Nextcloud base URL and username, prints `<base>/settings/user/security` so you can create an app password, then saves local auth config under your user config directory.
 
 Env overrides are optional and take precedence over the saved local config:
 
